@@ -1,0 +1,30 @@
+manifestVersion: 1
+id: gianmaria-url-follower
+name: URL Follower
+tagline: Pagina di presentazione di URL Follower
+icon: https://svgur.com/i/mvA.svg
+category: Development
+version: "0.1.0"
+port: 4001
+description: >-
+  URL Follower è un'app in sviluppo.
+
+
+  Per ora espone una semplice pagina di presentazione.
+
+developer: Gianmaria Previtera
+website: https://github.com/GianmariaPrevitera/Umbrel_Store
+submitter: Gianmaria Previtera
+submission: https://github.com/GianmariaPrevitera/Umbrel_Store
+repo: https://github.com/GianmariaPrevitera/Umbrel_Store
+support: https://github.com/GianmariaPrevitera/Umbrel_Store/issues
+gallery:
+  - https://i.imgur.com/yyVG0Jb.jpeg
+  - https://i.imgur.com/yyVG0Jb.jpeg
+  - https://i.imgur.com/yyVG0Jb.jpeg
+releaseNotes: >-
+  Prima versione: pagina di presentazione statica.
+dependencies: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>URL Follower</title>
+  <style>
+    :root { --bg: #f6f7f9; --fg: #1b1f24; --muted: #5b6570; --card: #ffffff; --accent: #4f46e5; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #14171c; --fg: #e8ebef; --muted: #9aa4af; --card: #1e232a; --accent: #8b87ff; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px;
+           background: var(--bg); color: var(--fg);
+           font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    main { max-width: 640px; width: 100%; background: var(--card); border-radius: 16px;
+           padding: 40px 32px; box-shadow: 0 4px 24px rgba(0,0,0,.08); }
+    h1 { margin: 0 0 8px; font-size: 2rem; }
+    h1 span { color: var(--accent); }
+    p { line-height: 1.6; color: var(--muted); }
+    .badge { display: inline-block; margin-bottom: 16px; padding: 4px 12px; border-radius: 999px;
+             background: var(--accent); color: #fff; font-size: .8rem; }
+    a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <main>
+    <span class="badge">v0.1.0</span>
+    <h1>URL <span>Follower</span></h1>
+    <p>Benvenuto! Questa è la pagina di presentazione di URL Follower, un'app che gira sul tuo Umbrel.</p>
+    <p>L'app è in sviluppo: le funzionalità verranno aggiunte nelle prossime versioni.</p>
+    <p><a href="https://github.com/GianmariaPrevitera/Umbrel_Store">Codice sorgente su GitHub</a></p>
+  </main>
+</body>
+</html>
