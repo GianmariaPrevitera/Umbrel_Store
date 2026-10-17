@@ -205,7 +205,7 @@
     var button = $("login-button");
     button.disabled = true;
     $("login-error").hidden = true;
-    api("POST", "api/login", { api_key: $("api-key").value })
+    api("POST", "api/login", { password: $("api-key").value })
       .then(function (data) { me = data.username; return start(); })
       .catch(function (e) { showLogin(e.message); })
       .then(function () { button.disabled = false; });
