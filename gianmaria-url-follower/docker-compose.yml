@@ -18,7 +18,10 @@ services:
     environment:
       PYTHONDONTWRITEBYTECODE: "1"
       WWW_DIR: /www
+      DATA_DIR: /data
     volumes:
-      # Le cartelle app/ e www/ del repo vengono copiate da Umbrel in ${APP_DATA_DIR}
+      # Le cartelle app/, www/ e data/ del repo vengono copiate da Umbrel in ${APP_DATA_DIR}
       - ${APP_DATA_DIR}/app:/app:ro
       - ${APP_DATA_DIR}/www:/www:ro
+      # Qui viene salvato l'elenco degli URL monitorati
+      - ${APP_DATA_DIR}/data:/data

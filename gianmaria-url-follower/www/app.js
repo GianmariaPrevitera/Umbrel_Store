@@ -1,33 +1,33 @@
 (function () {
   "use strict";
 
-  var form = document.getElementById("try");
-  var input = document.getElementById("url");
-  var button = document.getElementById("go");
-  var alertBox = document.getElementById("alert");
-  var results = document.getElementById("results");
-  var title = document.getElementById("trace-title");
-  var trace = document.getElementById("trace");
+  var tbody = document.getElementById("url-table-body");
+  var empty = document.getElementById("empty");
+  var note = document.getElementById("note");
+  var addButton = document.getElementById("add-url-button");
+  var checkAllButton = document.getElementById("check-all-button");
+  var dialog = document.getElementById("add-url-modal");
+  var addForm = document.getElementById("add-form");
+  var newUrl = document.getElementById("new-url");
+  var addError = document.getElementById("add-error");
+  var addSubmit = document.getElementById("add-submit");
+  var addCancel = document.getElementById("add-cancel");
 
-  var MEANINGS = {
-    301: "Spostato in modo permanente",
-    302: "Reindirizzamento temporaneo",
-    303: "Rimandato a un'altra pagina",
-    307: "Reindirizzamento temporaneo",
-    308: "Spostato in modo permanente",
-    401: "Richiede un accesso",
-    403: "Accesso negato",
-    404: "Pagina non trovata",
-    410: "Pagina rimossa",
-    429: "Troppe richieste al sito"
-  };
+  var items = [];
 
-  function meaning(hop, isLast) {
-    if (MEANINGS[hop.status]) return MEANINGS[hop.status];
-    if (hop.status >= 200 && hop.status < 300) return isLast ? "Destinazione raggiunta" : "Risposta riuscita";
-    if (hop.status >= 500) return "Errore del sito";
-    if (hop.status >= 400) return "Richiesta rifiutata dal sito";
-    return hop.reason || "Risposta del sito";
+  function api(method, path, body) {
+    return fetch(path, {
+      method: method,
+      headers: { "Content-Type": "application/json", "X-URL-Follower": "1" },
+      body: body ? JSON.stringify(body) : undefined
+    }).then(function (response) {
+      return response.json().catch(function () { return {}; }).then(function (data) {
+        if (!response.ok) {
+          throw new Error((data.error && data.error.message) || "Operazione non riuscita. Riprova.");
+        }
+        return data;
+      });
+    });
   }
 
   function el(tag, className, text) {
@@ -37,64 +37,147 @@
     return node;
   }
 
-  function showAlert(message) {
-    alertBox.textContent = message;
-    alertBox.hidden = !message;
+  function formatDate(iso) {
+    if (!iso) return "Mai controllato";
+    var date = new Date(iso);
+    if (isNaN(date.getTime())) return iso;
+    return date.toLocaleString("it-IT", { dateStyle: "medium", timeStyle: "short" });
   }
 
-  function setBusy(busy) {
-    button.disabled = busy;
-    button.textContent = busy ? "Sto seguendo il link…" : "Segui il link";
-    results.setAttribute("aria-busy", busy ? "true" : "false");
+  function showNote(message) {
+    note.textContent = message || "";
+    note.hidden = !message;
   }
 
-  function render(data) {
-    var hops = data.hops || [];
-    trace.textContent = "";
-    title.hidden = hops.length === 0;
-    if (!hops.length) return;
-
-    title.textContent = "Percorso trovato ";
-    title.appendChild(el("span", "", "(" + hops.length + (hops.length === 1 ? " passaggio)" : " passaggi)")));
-
-    hops.forEach(function (hop, i) {
-      var isLast = i === hops.length - 1;
-      var item = el("li", "hop");
-      item.style.setProperty("--i", i);
-      if (isLast && !data.error) item.classList.add(hop.status < 400 ? "final" : "failed");
-
-      var body = el("div");
-      body.appendChild(el("p", "url", hop.url));
-      var meta = el("p", "meta");
-      meta.appendChild(el("span", "code", String(hop.status)));
-      meta.appendChild(document.createTextNode(" " + meaning(hop, isLast)));
-      body.appendChild(meta);
-
-      item.appendChild(el("span", "node", String(hop.n)));
-      item.appendChild(body);
-      trace.appendChild(item);
-    });
+  function badge(item) {
+    if (item.status === "online") return el("span", "badge online", "ONLINE");
+    if (item.status === "offline") return el("span", "badge offline", "OFFLINE");
+    return el("span", "badge unknown", "NON CONTROLLATO");
   }
 
-  form.addEventListener("submit", function (event) {
-    event.preventDefault();
-    var value = input.value.trim();
-    showAlert("");
-    if (!value) {
-      showAlert("Incolla un indirizzo da seguire, per esempio https://bit.ly/esempio.");
-      input.focus();
-      return;
+  function buildRow(item) {
+    var row = el("tr");
+
+    var urlCell = el("td");
+    var link = el("a", "", item.url);
+    link.href = item.url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    urlCell.appendChild(link);
+    if (item.hops && item.hops.length) {
+      var chain = el("p", "detail");
+      chain.appendChild(el("span", "mono", item.hops.join(" → ")));
+      if (item.final_url && item.final_url !== item.url) {
+        chain.appendChild(document.createTextNode(" verso " + item.final_url));
+      }
+      urlCell.appendChild(chain);
     }
-    setBusy(true);
-    fetch("api/follow?url=" + encodeURIComponent(value), { headers: { Accept: "application/json" } })
-      .then(function (response) { return response.json(); })
-      .then(function (data) {
-        render(data);
-        if (data.error) showAlert(data.error.message);
+    if (item.error) urlCell.appendChild(el("p", "detail error", item.error));
+    row.appendChild(urlCell);
+
+    var statusCell = el("td");
+    statusCell.appendChild(badge(item));
+    row.appendChild(statusCell);
+
+    row.appendChild(el("td", "nowrap-cell", formatDate(item.last_check)));
+
+    var actions = el("td");
+    var list = el("div", "btn-list nowrap");
+    var check = el("button", "btn btn-outline-primary btn-sm", "Controlla");
+    check.type = "button";
+    check.addEventListener("click", function () { checkOne(item, check); });
+    var remove = el("button", "btn btn-outline-danger btn-sm", "Elimina");
+    remove.type = "button";
+    remove.addEventListener("click", function () { removeOne(item, remove); });
+    list.appendChild(check);
+    list.appendChild(remove);
+    actions.appendChild(list);
+    row.appendChild(actions);
+    return row;
+  }
+
+  function render() {
+    tbody.textContent = "";
+    items.forEach(function (item) { tbody.appendChild(buildRow(item)); });
+    empty.hidden = items.length > 0;
+    checkAllButton.disabled = items.length === 0;
+  }
+
+  function applyData(data) {
+    items = data.urls || [];
+    showNote(data.persistent === false
+      ? "Attenzione: l'elenco non può essere salvato su disco e andrà perso al riavvio dell'app."
+      : "");
+    render();
+  }
+
+  function checkOne(item, button) {
+    button.disabled = true;
+    button.textContent = "Controllo…";
+    api("POST", "api/urls/" + encodeURIComponent(item.id) + "/check")
+      .then(function (updated) {
+        items = items.map(function (it) { return it.id === updated.id ? updated : it; });
+        render();
       })
-      .catch(function () {
-        showAlert("Impossibile contattare l'app. Controlla che sia in esecuzione e riprova.");
+      .catch(function (error) { showNote(error.message); render(); });
+  }
+
+  function removeOne(item, button) {
+    if (!window.confirm("Eliminare " + item.url + " dall'elenco?")) return;
+    button.disabled = true;
+    api("DELETE", "api/urls/" + encodeURIComponent(item.id))
+      .then(function () {
+        items = items.filter(function (it) { return it.id !== item.id; });
+        render();
       })
-      .then(function () { setBusy(false); });
+      .catch(function (error) { showNote(error.message); render(); });
+  }
+
+  checkAllButton.addEventListener("click", function () {
+    checkAllButton.disabled = true;
+    checkAllButton.textContent = "Controllo in corso…";
+    api("POST", "api/check-all")
+      .then(applyData)
+      .catch(function (error) { showNote(error.message); })
+      .then(function () {
+        checkAllButton.textContent = "Controlla tutti";
+        render();
+      });
   });
+
+  addButton.addEventListener("click", function () {
+    addError.hidden = true;
+    newUrl.value = "";
+    dialog.showModal();
+    newUrl.focus();
+  });
+  addCancel.addEventListener("click", function () { dialog.close(); });
+
+  addForm.addEventListener("submit", function (event) {
+    event.preventDefault();
+    addError.hidden = true;
+    addSubmit.disabled = true;
+    addSubmit.textContent = "Aggiungo e controllo…";
+    api("POST", "api/urls", { url: newUrl.value })
+      .then(function (created) {
+        items.push(created);
+        render();
+        dialog.close();
+      })
+      .catch(function (error) {
+        addError.textContent = error.message;
+        addError.hidden = false;
+      })
+      .then(function () {
+        addSubmit.disabled = false;
+        addSubmit.textContent = "Aggiungi";
+      });
+  });
+
+  api("GET", "api/urls")
+    .then(applyData)
+    .catch(function () {
+      showNote("Impossibile contattare l'app. Controlla che sia in esecuzione e ricarica la pagina.");
+      render();
+    });
 })();

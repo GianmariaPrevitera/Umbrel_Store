@@ -1,17 +1,17 @@
 manifestVersion: 1
 id: gianmaria-url-follower
 name: URL Follower
-tagline: Segui un link e scopri dove porta
+tagline: Controlla se i tuoi link sono online
 icon: https://svgur.com/i/mvA.svg
 category: Development
-version: "0.2.0"
+version: "0.3.0"
 port: 4001
 description: >-
-  Incolla un link accorciato o di tracciamento e scopri dove porta davvero.
+  Tieni sotto controllo gli indirizzi che ti interessano e scopri se sono online.
 
 
-  URL Follower segue i reindirizzamenti uno alla volta e mostra ogni passaggio
-  con il suo codice di risposta, senza scaricare il contenuto della pagina finale.
+  URL Follower segue i reindirizzamenti di ogni link, mostra lo stato (online o
+  offline) e la data dell'ultimo controllo, senza scaricare il contenuto delle pagine.
 
 developer: Gianmaria Previtera
 website: https://github.com/GianmariaPrevitera/Umbrel_Store
@@ -24,7 +24,8 @@ gallery:
   - https://i.imgur.com/yyVG0Jb.jpeg
   - https://i.imgur.com/yyVG0Jb.jpeg
 releaseNotes: >-
-  Aggiunto il backend: ora l'app segue davvero i reindirizzamenti di un link.
+  Nuova pagina con l'elenco degli URL monitorati: aggiungi, controlla ed elimina gli indirizzi.
+  L'elenco viene salvato e resta anche dopo il riavvio dell'app.
 dependencies: []
 path: ""
 defaultUsername: ""

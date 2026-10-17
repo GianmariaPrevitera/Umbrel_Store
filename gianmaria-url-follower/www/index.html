@@ -4,246 +4,167 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>URL Follower</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231D2B3A'/%3E%3Cpath d='M9 22 L16 16 L23 10' stroke='%236EA0FF' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='9' cy='22' r='3' fill='%236EA0FF'/%3E%3Ccircle cx='23' cy='10' r='3.5' fill='%23F2B134'/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23066FD1'/%3E%3Cpath d='M9 22 L16 16 L23 10' stroke='white' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='9' cy='22' r='3' fill='white'/%3E%3Ccircle cx='23' cy='10' r='3.5' fill='%23F59F00'/%3E%3C/svg%3E">
   <style>
     :root {
-      --bg: #F0F3F1;
+      --bg: #F6F8FB;
       --surface: #FFFFFF;
-      --ink: #1D2B3A;
-      --muted: #5E6B78;
-      --line: #2F6FED;
-      --dest: #F2B134;
-      --err: #C8372D;
-      --rule: #D5DCE0;
-      --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
-      --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      --text: #182433;
+      --muted: #667382;
+      --border: #E6E7E9;
+      --primary: #066FD1;
+      --primary-fg: #FFFFFF;
+      --green: #2FB344;
+      --red: #D63939;
+      --grey: #667382;
+      --hover: #F6F8FB;
+      --font: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
       --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     }
     @media (prefers-color-scheme: dark) {
       :root {
-        --bg: #0F1720;
-        --surface: #172230;
-        --ink: #E6EDF3;
-        --muted: #93A1AF;
-        --line: #6EA0FF;
-        --err: #FF8A80;
-        --rule: #263445;
+        --bg: #151F2C;
+        --surface: #182433;
+        --text: #DCE1E7;
+        --muted: #9AA7B6;
+        --border: #243245;
+        --primary: #3B93E8;
+        --hover: #1C2B3D;
       }
     }
 
     *, *::before, *::after { box-sizing: border-box; }
-    html { -webkit-text-size-adjust: 100%; }
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--ink);
-      font-family: var(--sans);
-      line-height: 1.6;
-    }
-    .page { max-width: 760px; margin: 0 auto; padding: 28px 24px 56px; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 400 .875rem/1.5 var(--font); }
 
-    /* Intestazione */
-    .brand { display: flex; align-items: center; gap: 12px; }
-    .brand svg { width: 36px; height: 36px; flex: none; }
-    .brand-name { font-weight: 600; font-size: 1.05rem; }
-    .version {
-      margin-left: auto;
-      font-size: .8rem;
-      color: var(--muted);
-      border: 1px solid var(--rule);
-      border-radius: 999px;
-      padding: 2px 12px;
-    }
+    /* Barra superiore */
+    .topbar { background: var(--surface); border-bottom: 1px solid var(--border); }
+    .topbar-inner { max-width: 1140px; margin: 0 auto; padding: 12px 16px; display: flex; align-items: center; gap: 10px; }
+    .topbar svg { width: 28px; height: 28px; }
+    .topbar strong { font-size: 1rem; }
+    .version { margin-left: auto; color: var(--muted); font-size: .75rem; }
 
-    /* Hero */
-    .hero { padding: 72px 0 40px; }
-    h1 {
-      margin: 0 0 20px;
-      max-width: 14ch;
-      font-family: var(--serif);
-      font-weight: 700;
-      font-size: clamp(2.4rem, 7vw, 4rem);
-      line-height: 1.05;
-      letter-spacing: -0.02em;
-    }
-    .lead { margin: 0 0 32px; max-width: 52ch; font-size: 1.15rem; color: var(--muted); }
+    .container { max-width: 1140px; margin: 0 auto; padding: 24px 16px 48px; }
 
-    .try { display: flex; gap: 8px; flex-wrap: wrap; }
-    .try input {
-      flex: 1 1 280px;
-      min-width: 0;
-      padding: 14px 16px;
-      font: 1rem var(--mono);
-      color: var(--ink);
-      background: var(--surface);
-      border: 1px solid var(--rule);
-      border-radius: 10px;
-    }
-    .try input::placeholder { color: var(--muted); }
-    .try button {
-      padding: 14px 24px;
-      font: 600 1rem var(--sans);
-      color: var(--bg);
-      background: var(--ink);
-      border: 0;
-      border-radius: 10px;
-      cursor: pointer;
-    }
-    .try button:disabled { opacity: .6; cursor: progress; }
-    .note { margin: 10px 0 0; font-size: .9rem; color: var(--muted); }
+    /* Card */
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; box-shadow: 0 0 4px rgba(24,36,51,.04); }
+    .card-header { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+    .card-title { margin: 0; font-size: 1rem; font-weight: 600; }
+    .card-actions { margin-left: auto; }
+    .btn-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .btn-list.nowrap { flex-wrap: nowrap; }
 
-    .alert {
-      margin: 24px 0 0;
-      padding: 12px 16px;
-      border-left: 4px solid var(--err);
-      background: var(--surface);
-      border-radius: 0 8px 8px 0;
+    /* Pulsanti */
+    .btn {
+      display: inline-block; padding: 6px 14px; font: 500 .875rem/1.4 var(--font);
+      border: 1px solid transparent; border-radius: 4px; background: transparent; color: var(--text); cursor: pointer;
     }
-    .alert[hidden] { display: none; }
+    .btn:disabled { opacity: .6; cursor: progress; }
+    .btn-sm { padding: 2px 8px; font-size: .75rem; }
+    .btn-primary { background: var(--primary); color: var(--primary-fg); }
+    .btn-primary:hover:not(:disabled) { filter: brightness(.92); }
+    .btn-outline-primary { color: var(--primary); border-color: var(--primary); }
+    .btn-outline-primary:hover:not(:disabled) { background: var(--primary); color: var(--primary-fg); }
+    .btn-outline-danger { color: var(--red); border-color: var(--red); }
+    .btn-outline-danger:hover:not(:disabled) { background: var(--red); color: #fff; }
+    .btn-link { border-color: var(--border); }
 
-    /* Percorso */
-    .trace-title { margin: 56px 0 20px; font-size: 1rem; font-weight: 600; }
-    .trace-title[hidden] { display: none; }
-    .trace-title span { font-weight: 400; color: var(--muted); }
-    .trace { margin: 0; padding: 0; list-style: none; }
-    .hop {
-      position: relative;
-      display: grid;
-      grid-template-columns: 32px 1fr;
-      column-gap: 20px;
-      padding-bottom: 28px;
-      animation: appear .4s ease-out both;
-      animation-delay: calc(var(--i) * .45s + .2s);
-    }
-    .hop:last-child { padding-bottom: 0; }
-    /* Tratto che collega questo nodo al successivo */
-    .hop:not(:last-child)::before {
-      content: "";
-      position: absolute;
-      left: 15px; top: 16px; bottom: -16px;
-      width: 2px;
-      background: var(--line);
-      transform-origin: top;
-      animation: draw .45s ease-out both;
-      animation-delay: calc(var(--i) * .45s + .2s);
-    }
-    .node {
-      position: relative;
-      z-index: 1;
-      display: grid; place-items: center;
-      width: 32px; height: 32px;
-      border-radius: 50%;
-      font: 600 .85rem var(--sans);
-      color: var(--bg);
-      background: var(--line);
-    }
-    .hop.final .node { background: var(--dest); color: #1D2B3A; }
-    .hop.failed .node { background: var(--err); color: var(--bg); }
-    .url { margin: 3px 0 2px; font: .95rem var(--mono); overflow-wrap: anywhere; }
-    .meta { margin: 0; font-size: .9rem; color: var(--muted); }
-    .code { font-family: var(--mono); font-weight: 600; color: var(--ink); }
+    /* Tabella */
+    .table-responsive { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th { padding: 10px 20px; text-align: left; font-size: .625rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); background: var(--hover); border-bottom: 1px solid var(--border); }
+    td { padding: 12px 20px; vertical-align: middle; border-bottom: 1px solid var(--border); }
+    tbody tr:last-child td { border-bottom: 0; }
+    td a { color: var(--primary); text-decoration: none; overflow-wrap: anywhere; }
+    td a:hover { text-decoration: underline; }
+    .detail { margin: 2px 0 0; font-size: .75rem; color: var(--muted); overflow-wrap: anywhere; }
+    .detail.error { color: var(--red); }
+    .detail .mono { font-family: var(--mono); }
+    .nowrap-cell { white-space: nowrap; }
 
-    @keyframes draw { from { transform: scaleY(0); } to { transform: scaleY(1); } }
-    @keyframes appear { from { opacity: 0; } to { opacity: 1; } }
-    @media (prefers-reduced-motion: reduce) {
-      .hop, .hop::before { animation: none !important; }
-    }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: .625rem; font-weight: 700; letter-spacing: .04em; color: #fff; text-transform: uppercase; }
+    .badge.online { background: var(--green); }
+    .badge.offline { background: var(--red); }
+    .badge.unknown { background: var(--grey); }
 
-    /* Cosa vedrai */
-    .what { margin-top: 72px; border-top: 1px solid var(--rule); }
-    .what h2 { margin: 28px 0 8px; font-family: var(--serif); font-size: 1.6rem; }
-    dl { margin: 0; }
-    .row { display: grid; grid-template-columns: 180px 1fr; gap: 8px 24px; padding: 16px 0; border-bottom: 1px solid var(--rule); }
-    dt { font-weight: 600; }
-    dd { margin: 0; max-width: 52ch; color: var(--muted); }
-    @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
+    .empty { margin: 0; padding: 40px 20px; text-align: center; color: var(--muted); }
+    .empty[hidden], .note[hidden] { display: none; }
+    .note { margin: 16px 0 0; padding: 10px 14px; border-left: 3px solid var(--red); background: var(--surface); color: var(--muted); }
 
-    footer { margin-top: 40px; font-size: .9rem; color: var(--muted); }
-    footer p { margin: 0 0 4px; }
-    a { color: var(--line); text-underline-offset: 3px; }
-    a:focus-visible, button:focus-visible, input:focus-visible {
-      outline: 3px solid var(--dest);
-      outline-offset: 2px;
-    }
+    /* Finestra "Aggiungi URL" */
+    dialog { width: min(480px, calc(100vw - 32px)); padding: 0; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--text); }
+    dialog::backdrop { background: rgba(24,36,51,.5); }
+    .dialog-body { padding: 20px; }
+    .dialog-body h2 { margin: 0 0 12px; font-size: 1rem; }
+    label { display: block; margin-bottom: 4px; font-weight: 500; }
+    input[type=text] { width: 100%; padding: 8px 12px; font: .875rem var(--mono); color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 4px; }
+    .hint { margin: 6px 0 0; color: var(--muted); font-size: .75rem; }
+    .form-error { margin: 12px 0 0; color: var(--red); }
+    .form-error[hidden] { display: none; }
+    .dialog-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--border); background: var(--hover); }
+
+    a:focus-visible, .btn:focus-visible, input:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
   </style>
 </head>
 <body>
-  <div class="page">
-    <header class="brand">
+  <header class="topbar">
+    <div class="topbar-inner">
       <svg viewBox="0 0 32 32" role="img" aria-label="Logo URL Follower">
-        <rect width="32" height="32" rx="8" fill="#1D2B3A"/>
-        <path d="M9 22 L16 16 L23 10" stroke="#6EA0FF" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-        <circle cx="9" cy="22" r="3" fill="#6EA0FF"/>
-        <circle cx="23" cy="10" r="3.5" fill="#F2B134"/>
+        <rect width="32" height="32" rx="8" fill="#066FD1"/>
+        <path d="M9 22 L16 16 L23 10" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <circle cx="9" cy="22" r="3" fill="#fff"/>
+        <circle cx="23" cy="10" r="3.5" fill="#F59F00"/>
       </svg>
-      <span class="brand-name">URL Follower</span>
-      <span class="version">v0.2.0</span>
-    </header>
+      <strong>URL Follower</strong>
+      <span class="version">v0.3.0</span>
+    </div>
+  </header>
 
-    <main>
-      <section class="hero">
-        <h1>Segui un link fino in fondo.</h1>
-        <p class="lead">Incolla un indirizzo e scopri dove porta davvero, passaggio dopo passaggio.</p>
-
-        <form class="try" id="try">
-          <input type="text" id="url" name="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://bit.ly/esempio" aria-label="Indirizzo da seguire">
-          <button type="submit" id="go">Segui il link</button>
-        </form>
-        <p class="note" id="note">Vengono seguiti al massimo 10 passaggi.</p>
-        <p class="alert" id="alert" role="alert" hidden></p>
-
-        <div id="results" aria-live="polite">
-          <h2 class="trace-title" id="trace-title">Un esempio di percorso <span>(dati di prova)</span></h2>
-          <ol class="trace" id="trace">
-            <li class="hop" style="--i:0">
-              <span class="node">1</span>
-              <div>
-                <p class="url">https://bit.ly/esempio</p>
-                <p class="meta"><span class="code">301</span> Spostato in modo permanente</p>
-              </div>
-            </li>
-            <li class="hop" style="--i:1">
-              <span class="node">2</span>
-              <div>
-                <p class="url">https://esempio.it/promo?utm_source=mail</p>
-                <p class="meta"><span class="code">302</span> Reindirizzamento temporaneo</p>
-              </div>
-            </li>
-            <li class="hop final" style="--i:2">
-              <span class="node">3</span>
-              <div>
-                <p class="url">https://www.esempio.it/offerte/autunno</p>
-                <p class="meta"><span class="code">200</span> Destinazione raggiunta</p>
-              </div>
-            </li>
-          </ol>
+  <main class="container">
+    <div class="card">
+      <div class="card-header">
+        <h1 class="card-title">URL monitorati</h1>
+        <div class="card-actions">
+          <div class="btn-list">
+            <button id="add-url-button" type="button" class="btn btn-primary">Aggiungi URL</button>
+            <button id="check-all-button" type="button" class="btn btn-primary">Controlla tutti</button>
+          </div>
         </div>
-      </section>
+      </div>
 
-      <section class="what">
-        <h2>Cosa vedrai</h2>
-        <dl>
-          <div class="row">
-            <dt>Ogni passaggio</dt>
-            <dd>L'elenco degli indirizzi attraversati, nell'ordine in cui il link li visita.</dd>
-          </div>
-          <div class="row">
-            <dt>Il codice di risposta</dt>
-            <dd>Se un passaggio è permanente, temporaneo o un errore, in parole semplici.</dd>
-          </div>
-          <div class="row">
-            <dt>La destinazione</dt>
-            <dd>L'indirizzo finale, evidenziato, così sai dove atterri prima di aprirlo.</dd>
-          </div>
-        </dl>
-      </section>
-    </main>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>URL</th>
+              <th>Stato</th>
+              <th>Ultimo controllo</th>
+              <th>Azioni</th>
+            </tr>
+          </thead>
+          <tbody id="url-table-body"></tbody>
+        </table>
+      </div>
+      <p class="empty" id="empty" hidden>Non stai monitorando nessun indirizzo. Premi Aggiungi URL per inserire il primo.</p>
+    </div>
+    <p class="note" id="note" role="status" hidden></p>
+  </main>
 
-    <footer>
-      <p>URL Follower gira sul tuo Umbrel e non scarica il contenuto della pagina finale: legge solo le risposte del sito.</p>
-      <p><a href="https://github.com/GianmariaPrevitera/Umbrel_Store">Codice sorgente su GitHub</a></p>
-    </footer>
-  </div>
+  <dialog id="add-url-modal" aria-labelledby="add-title">
+    <form id="add-form" method="dialog">
+      <div class="dialog-body">
+        <h2 id="add-title">Aggiungi URL</h2>
+        <label for="new-url">Indirizzo da monitorare</label>
+        <input type="text" id="new-url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://esempio.it">
+        <p class="hint">Per ogni indirizzo vengono seguiti fino a 10 reindirizzamenti.</p>
+        <p class="form-error" id="add-error" role="alert" hidden></p>
+      </div>
+      <div class="dialog-footer">
+        <button type="button" class="btn btn-link" id="add-cancel">Annulla</button>
+        <button type="submit" class="btn btn-primary" id="add-submit">Aggiungi</button>
+      </div>
+    </form>
+  </dialog>
+
   <script src="app.js"></script>
 </body>
 </html>
