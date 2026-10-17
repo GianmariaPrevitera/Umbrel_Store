@@ -9,9 +9,16 @@ services:
       APP_PORT: 8080
 
   web:
-    # nginx senza privilegi di root: ascolta sulla porta 8080
-    image: nginxinc/nginx-unprivileged:1.27-alpine
+    # Immagine ufficiale di Python: il codice dell'app è in app/server.py
+    image: python:3.12-alpine
+    user: "1000:1000"
+    init: true
     restart: on-failure
+    command: ["python", "-u", "/app/server.py"]
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+      WWW_DIR: /www
     volumes:
-      # La cartella www/ del repo viene copiata da Umbrel in ${APP_DATA_DIR}
-      - ${APP_DATA_DIR}/www:/usr/share/nginx/html:ro
+      # Le cartelle app/ e www/ del repo vengono copiate da Umbrel in ${APP_DATA_DIR}
+      - ${APP_DATA_DIR}/app:/app:ro
+      - ${APP_DATA_DIR}/www:/www:ro

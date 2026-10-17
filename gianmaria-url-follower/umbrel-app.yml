@@ -1,16 +1,17 @@
 manifestVersion: 1
 id: gianmaria-url-follower
 name: URL Follower
-tagline: Pagina di presentazione di URL Follower
+tagline: Segui un link e scopri dove porta
 icon: https://svgur.com/i/mvA.svg
 category: Development
-version: "0.1.0"
+version: "0.2.0"
 port: 4001
 description: >-
-  URL Follower è un'app in sviluppo.
+  Incolla un link accorciato o di tracciamento e scopri dove porta davvero.
 
 
-  Per ora espone una semplice pagina di presentazione.
+  URL Follower segue i reindirizzamenti uno alla volta e mostra ogni passaggio
+  con il suo codice di risposta, senza scaricare il contenuto della pagina finale.
 
 developer: Gianmaria Previtera
 website: https://github.com/GianmariaPrevitera/Umbrel_Store
@@ -23,7 +24,7 @@ gallery:
   - https://i.imgur.com/yyVG0Jb.jpeg
   - https://i.imgur.com/yyVG0Jb.jpeg
 releaseNotes: >-
-  Prima versione: pagina di presentazione statica.
+  Aggiunto il backend: ora l'app segue davvero i reindirizzamenti di un link.
 dependencies: []
 path: ""
 defaultUsername: ""
