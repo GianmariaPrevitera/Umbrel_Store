@@ -2,7 +2,7 @@ manifestVersion: 1
 id: gianmaria-url-follower
 name: URL Follower
 tagline: Risponde in modo diverso a seconda dell'indirizzo
-icon: https://raw.githubusercontent.com/GianmariaPrevitera/Umbrel_Store/master/gianmaria-url-follower/icon.svg
+icon: https://raw.githubusercontent.com/GianmariaPrevitera/Umbrel_Store/refs/heads/master/gianmaria-url-follower/incon.svg
 category: Development
 version: "0.1.0"
 port: 4001
