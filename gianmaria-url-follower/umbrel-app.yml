@@ -31,6 +31,4 @@ releaseNotes: >-
 dependencies: []
 path: ""
 defaultUsername: "Admin"
-defaultPassword: "downtify"
-deterministicPassword: true
-defaultPassword: ""
+defaultPassword: "downtifyx"
