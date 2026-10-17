@@ -2,8 +2,8 @@
 """URL Follower - monitor di URL con pannello amministrativo.
 
 Pagine e API:
-  GET  /                    pannello amministrativo (login con la password
-                            mostrata da Umbrel tra le credenziali dell'app)
+  GET  /                    pagina di benvenuto
+  GET  /admin               pannello amministrativo (accesso con chiave API)
   GET  /api=<chiave>        testo semplice: gli URL online, uno per riga.
                             Chiave non valida o utente non disponibile:
                             pagina web vuota, sempre con risposta 200.
@@ -47,10 +47,8 @@ WWW_DIR = os.path.realpath(os.environ.get("WWW_DIR", "/www"))
 DATA_DIR = os.environ.get("DATA_DIR", "/data")
 DATABASE = os.path.join(DATA_DIR, "app.db")
 
-# Account principale. La sua password è APP_PASSWORD, la password che Umbrel
-# mostra tra le credenziali dell'app (deterministicPassword nel manifest).
-ADMIN_USERNAME = os.environ.get("INITIAL_USERNAME", "Admin")
-ADMIN_PASSWORD = os.environ.get("APP_PASSWORD", "")
+INITIAL_USERNAME = os.environ.get("INITIAL_USERNAME", "Admin")
+INITIAL_API_KEY = os.environ.get("INITIAL_API_KEY")  # facoltativa
 
 try:
     CHECK_INTERVAL = float(os.environ.get("CHECK_INTERVAL_MINUTES", "10")) * 60
@@ -434,27 +432,17 @@ def initialize_database():
             )""")
         has_admin = conn.execute("SELECT 1 FROM users WHERE admin = 1").fetchone()
         if has_admin is None:
-            api_key = generate_unique_api_key(conn)
+            api_key = INITIAL_API_KEY
+            if api_key and not KEY_FORMAT.fullmatch(api_key):
+                print("INITIAL_API_KEY ignorata: servono 9 caratteri tra lettere e numeri.",
+                      file=sys.stderr, flush=True)
+                api_key = None
+            if not api_key:
+                api_key = generate_unique_api_key(conn)
             conn.execute(
                 "INSERT OR IGNORE INTO users (nomeutente, apikey, admin, available) VALUES (?, ?, 1, 1)",
-                (ADMIN_USERNAME, api_key))
-            if ADMIN_PASSWORD:
-                print("Creato l'amministratore '%s'." % ADMIN_USERNAME, flush=True)
-            else:
-                # Senza APP_PASSWORD (esecuzione fuori da Umbrel) si entra con la chiave API.
-                print("Creato l'amministratore '%s'. Chiave API: %s" % (ADMIN_USERNAME, api_key), flush=True)
-
-
-def ensure_owner_admin():
-    """L'account principale esiste ed è amministratore (chi conosce la password di Umbrel non resta mai fuori)."""
-    with db() as conn:
-        row = conn.execute("SELECT id, admin FROM users WHERE nomeutente = ?", (ADMIN_USERNAME,)).fetchone()
-        if row is None:
-            conn.execute("INSERT INTO users (nomeutente, apikey, admin, available) VALUES (?, ?, 1, 1)",
-                         (ADMIN_USERNAME, generate_unique_api_key(conn)))
-        elif row["admin"] != 1:
-            conn.execute("UPDATE users SET admin = 1 WHERE id = ?", (row["id"],))
-    return ADMIN_USERNAME
+                (INITIAL_USERNAME, api_key))
+            print("Creato l'amministratore '%s'. Chiave API: %s" % (INITIAL_USERNAME, api_key), flush=True)
 
 
 def get_user_by_api_key(api_key):
@@ -537,8 +525,9 @@ CSP_ADMIN = ("default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; 
              "base-uri 'none'; frame-ancestors 'none'")
 
 ROUTES = [
-    ("GET", r"/", "h_page", "public"),
-    ("GET", r"/app\.js", "h_app_js", "public"),
+    ("GET", r"/", "h_welcome", "public"),
+    ("GET", r"/admin", "h_admin_page", "public"),
+    ("GET", r"/admin\.js", "h_admin_js", "public"),
     ("GET", r"/api=(.*)", "h_public_list", "public"),
     ("POST", r"/api/login", "h_login", "login"),
     ("POST", r"/api/logout", "h_logout", None),
@@ -708,11 +697,14 @@ class Handler(BaseHTTPRequestHandler):
         return self.send_text(404, "Not Found")
 
     # ---- pagine
-    def h_page(self):
-        self.send_file("index.html", "text/html; charset=utf-8", csp=CSP_ADMIN)
+    def h_welcome(self):
+        self.send_file("index.html", "text/html; charset=utf-8")
 
-    def h_app_js(self):
-        self.send_file("app.js", "application/javascript; charset=utf-8", csp=CSP_ADMIN)
+    def h_admin_page(self):
+        self.send_file("admin.html", "text/html; charset=utf-8", csp=CSP_ADMIN)
+
+    def h_admin_js(self):
+        self.send_file("admin.js", "application/javascript; charset=utf-8", csp=CSP_ADMIN)
 
     def h_public_list(self, key):
         user = get_user_by_api_key(key)
@@ -724,27 +716,18 @@ class Handler(BaseHTTPRequestHandler):
 
     # ---- accesso
     def h_login(self):
-        credential = self.read_json().get("password")
-        if not isinstance(credential, str) or not credential or len(credential) > 256:
-            raise ApiError(401, "Password non valida")
-        if ADMIN_PASSWORD and hmac.compare_digest(credential.encode("utf-8"), ADMIN_PASSWORD.encode("utf-8")):
-            # Password mostrata da Umbrel: accesso come account principale.
-            username = ensure_owner_admin()
-        else:
-            # Chiave API di un amministratore.
-            user = get_user_by_api_key(credential)
-            if user is None:
-                raise ApiError(401, "Password non valida")
-            # "available" non viene controllato qui: un amministratore non
-            # disponibile può comunque entrare nel pannello.
-            if user["admin"] != 1:
-                raise ApiError(403, "Accesso amministrativo non autorizzato")
-            username = user["nomeutente"]
+        user = get_user_by_api_key(self.read_json().get("api_key"))
+        if user is None:
+            raise ApiError(401, "API key non valida")
+        # "available" non viene controllato qui: un amministratore non
+        # disponibile può comunque entrare nel pannello.
+        if user["admin"] != 1:
+            raise ApiError(403, "Accesso amministrativo non autorizzato")
         cookie = "session=%s; Path=/; Max-Age=%d; HttpOnly; SameSite=Strict" % (
-            make_session(username), SESSION_SECONDS)
+            make_session(user["nomeutente"]), SESSION_SECONDS)
         if self.trusted_proxy and self.headers.get("X-Forwarded-Proto", "").split(",")[-1].strip() == "https":
             cookie += "; Secure"
-        self.send_json(200, {"success": True, "username": username}, extra={"Set-Cookie": cookie})
+        self.send_json(200, {"success": True, "username": user["nomeutente"]}, extra={"Set-Cookie": cookie})
 
     def h_logout(self):
         self.send_json(200, {"success": True}, extra={

@@ -21,8 +21,6 @@ services:
       PYTHONDONTWRITEBYTECODE: "1"
       WWW_DIR: /www
       DATA_DIR: /data
-      # Password mostrata da Umbrel tra le credenziali dell'app
-      APP_PASSWORD: ${APP_PASSWORD}
       # Ogni quanti minuti controllare tutti gli URL (0 = mai)
       CHECK_INTERVAL_MINUTES: "10"
     volumes:
