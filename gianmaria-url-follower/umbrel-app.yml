@@ -1,17 +1,19 @@
 manifestVersion: 1
 id: gianmaria-url-follower
 name: URL Follower
-tagline: Risponde in modo diverso a seconda dell'indirizzo
-icon: https://raw.githubusercontent.com/GianmariaPrevitera/Umbrel_Store/refs/heads/master/gianmaria-url-follower/incon.svg
+tagline: Tieni d'occhio i tuoi indirizzi e scopri quali sono online
+icon: https://raw.githubusercontent.com/GianmariaPrevitera/Umbrel_Store/master/gianmaria-url-follower/icon.svg
 category: Development
-version: "0.1.0"
+version: "0.2.0"
 port: 4001
 description: >-
-  Una pagina di benvenuto all'indirizzo principale e una risposta in testo
-  semplice quando l'indirizzo contiene una chiave api di 9 caratteri.
+  Controlla periodicamente un elenco di indirizzi web, segue i reindirizzamenti
+  e salva la destinazione finale. Con una chiave API personale, all'indirizzo
+  /api=<chiave> ottieni in testo semplice l'elenco degli indirizzi online.
 
 
-  Versione di prova: il testo restituito è fisso.
+  Dal pannello /admin gestisci gli indirizzi e gli utenti. Alla prima
+  installazione la chiave dell'amministratore è nei log dell'app.
 
 developer: Gianmaria Previtera
 website: https://github.com/GianmariaPrevitera/Umbrel_Store
@@ -24,7 +26,8 @@ gallery:
   - https://i.imgur.com/yyVG0Jb.jpeg
   - https://i.imgur.com/yyVG0Jb.jpeg
 releaseNotes: >-
-  Prima versione riprogettata: pagina di benvenuto e risposta di prova in testo semplice.
+  Nuova versione: pannello amministrativo con utenti e chiavi API, controllo
+  periodico degli indirizzi ed elenco in testo semplice.
 dependencies: []
 path: ""
 defaultUsername: ""

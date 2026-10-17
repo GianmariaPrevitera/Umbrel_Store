@@ -7,20 +7,25 @@ services:
       # Formato: <app-id>_<nome-servizio-docker>_1
       APP_HOST: gianmaria-url-follower_web_1
       APP_PORT: 8080
-      # L'app deve essere raggiungibile senza il login di Umbrel
+      # L'app ha un suo accesso con chiave API: niente login di Umbrel davanti
       PROXY_AUTH_ADD: "false"
 
   web:
-    # Immagine ufficiale di Python: il codice dell'app è in app/server.py
+    # Immagine ufficiale di Python: il codice dell'app è in app/app.py
     image: python:3.12-alpine
     user: "1000:1000"
     init: true
     restart: on-failure
-    command: ["python", "-u", "/app/server.py"]
+    command: ["python", "-u", "/app/app.py"]
     environment:
       PYTHONDONTWRITEBYTECODE: "1"
       WWW_DIR: /www
+      DATA_DIR: /data
+      # Ogni quanti minuti controllare tutti gli URL (0 = mai)
+      CHECK_INTERVAL_MINUTES: "10"
     volumes:
-      # Le cartelle app/ e www/ del repo vengono copiate da Umbrel in ${APP_DATA_DIR}
+      # Le cartelle app/, www/ e data/ del repo vengono copiate da Umbrel in ${APP_DATA_DIR}
       - ${APP_DATA_DIR}/app:/app:ro
       - ${APP_DATA_DIR}/www:/www:ro
+      # Database degli URL e degli utenti
+      - ${APP_DATA_DIR}/data:/data

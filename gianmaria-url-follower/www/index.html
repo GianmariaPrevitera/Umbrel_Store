@@ -86,7 +86,7 @@
     @media (prefers-reduced-motion: reduce) { .route { animation: none; } }
 
     footer { margin-top: 48px; font-size: .9rem; color: var(--muted); }
-    footer p { margin: 0; }
+    footer p { margin: 0 0 4px; }
     a { color: var(--line); text-underline-offset: 3px; }
     a:focus-visible { outline: 3px solid var(--key); outline-offset: 2px; }
   </style>
@@ -119,7 +119,7 @@
 
         <div class="route" style="--i:1">
           <code class="address">https://esempio.com/api=<span class="key">&lt;chiave api&gt;</span></code>
-          <p class="result"><strong>Testo semplice.</strong> Nessuna grafica: solo il testo, così com'è.</p>
+          <p class="result"><strong>Testo semplice.</strong> Un indirizzo per riga: quelli che risultano online in questo momento.</p>
         </div>
 
         <div class="about-key">
@@ -129,6 +129,7 @@
     </main>
 
     <footer>
+      <p><a href="/admin">Accesso amministratore</a></p>
       <p><a href="https://github.com/GianmariaPrevitera/Umbrel_Store">Codice sorgente su GitHub</a></p>
     </footer>
   </div>

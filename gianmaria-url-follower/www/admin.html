@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>URL Follower - Amministrazione</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23066FD1'/%3E%3Cpath d='M9 22 L16 16 L23 10' stroke='white' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='9' cy='22' r='3' fill='white'/%3E%3Ccircle cx='23' cy='10' r='3.5' fill='%23F59F00'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      --bg: #F6F8FB; --surface: #FFFFFF; --text: #182433; --muted: #667382; --border: #E6E7E9;
+      --primary: #066FD1; --primary-fg: #FFFFFF; --green: #2FB344; --red: #D63939; --grey: #667382; --hover: #F6F8FB;
+      --font: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #151F2C; --surface: #182433; --text: #DCE1E7; --muted: #9AA7B6; --border: #243245; --primary: #3B93E8; --hover: #1C2B3D; }
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 400 .875rem/1.5 var(--font); }
+
+    .topbar { background: var(--surface); border-bottom: 1px solid var(--border); }
+    .topbar-inner { max-width: 1140px; margin: 0 auto; padding: 12px 16px; display: flex; align-items: center; gap: 10px; }
+    .topbar svg { width: 28px; height: 28px; }
+    .topbar strong { font-size: 1rem; }
+    .who { margin-left: auto; text-align: right; line-height: 1.2; }
+    .who a { color: var(--red); font-size: .75rem; text-decoration: none; }
+    .container { max-width: 1140px; margin: 0 auto; padding: 24px 16px 48px; }
+
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; box-shadow: 0 0 4px rgba(24,36,51,.04); margin-bottom: 16px; }
+    .card-header { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+    .card-title { margin: 0; font-size: 1rem; font-weight: 600; }
+    .card-actions { margin-left: auto; }
+    .btn-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .btn-list.nowrap { flex-wrap: nowrap; }
+    .btn { display: inline-block; padding: 6px 14px; font: 500 .875rem/1.4 var(--font); border: 1px solid transparent; border-radius: 4px; background: transparent; color: var(--text); cursor: pointer; }
+    .btn:disabled { opacity: .6; cursor: progress; }
+    .btn-sm { padding: 2px 8px; font-size: .75rem; }
+    .btn-primary { background: var(--primary); color: var(--primary-fg); }
+    .btn-primary:hover:not(:disabled) { filter: brightness(.92); }
+    .btn-outline-primary { color: var(--primary); border-color: var(--primary); }
+    .btn-outline-primary:hover:not(:disabled) { background: var(--primary); color: var(--primary-fg); }
+    .btn-outline-danger { color: var(--red); border-color: var(--red); }
+    .btn-outline-danger:hover:not(:disabled) { background: var(--red); color: #fff; }
+    .btn-link { border-color: var(--border); }
+    .w-100 { width: 100%; }
+
+    .table-responsive { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th { padding: 10px 20px; text-align: left; font-size: .625rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); background: var(--hover); border-bottom: 1px solid var(--border); }
+    td { padding: 12px 20px; vertical-align: middle; border-bottom: 1px solid var(--border); }
+    tbody tr:last-child td { border-bottom: 0; }
+    td a { color: var(--primary); text-decoration: none; overflow-wrap: anywhere; }
+    td a:hover { text-decoration: underline; }
+    .mono { font-family: var(--mono); }
+    .nowrap-cell { white-space: nowrap; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: .625rem; font-weight: 700; letter-spacing: .04em; color: #fff; text-transform: uppercase; background: var(--grey); }
+    .badge.online, .badge.yes { background: var(--green); }
+    .badge.offline { background: var(--red); }
+    .empty { margin: 0; padding: 32px 20px; text-align: center; color: var(--muted); }
+
+    .alert { margin: 0 0 16px; padding: 12px 16px; border-left: 4px solid var(--primary); background: var(--surface); border-radius: 0 4px 4px 0; display: flex; gap: 12px; align-items: flex-start; }
+    .alert.error { border-color: var(--red); }
+    .alert.success { border-color: var(--green); }
+    .alert span { flex: 1; overflow-wrap: anywhere; }
+    .alert button { border: 0; background: none; color: var(--muted); font-size: 1.2rem; line-height: 1; cursor: pointer; }
+
+    .login { min-height: 100vh; display: grid; place-items: center; padding: 16px; }
+    .login .card { width: min(380px, 100%); margin: 0; }
+    .login-body { padding: 24px; }
+    .login-body h1 { margin: 0 0 4px; text-align: center; font-size: 1.4rem; }
+    .login-body .sub { margin: 0 0 20px; text-align: center; color: var(--muted); }
+
+    dialog { width: min(460px, calc(100vw - 32px)); padding: 0; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--text); }
+    dialog::backdrop { background: rgba(24,36,51,.5); }
+    .dialog-body { padding: 20px; }
+    .dialog-body h2 { margin: 0 0 12px; font-size: 1rem; }
+    .dialog-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--border); background: var(--hover); }
+    label { display: block; margin-bottom: 4px; font-weight: 500; }
+    .check { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; font-weight: 400; }
+    input[type=text], input[type=password] { width: 100%; padding: 8px 12px; font: .875rem var(--mono); color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 4px; }
+    .hint { margin: 6px 0 0; color: var(--muted); font-size: .75rem; }
+    .form-error { margin: 12px 0 0; color: var(--red); }
+    a:focus-visible, .btn:focus-visible, input:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+  </style>
+</head>
+<body>
+
+  <!-- Accesso -->
+  <div class="login" id="login-page" hidden>
+    <div class="card">
+      <div class="login-body">
+        <h1>URL Follower</h1>
+        <p class="sub">Accesso amministrativo</p>
+        <form id="login-form">
+          <label for="api-key">Chiave API</label>
+          <input id="api-key" type="password" autocomplete="off" maxlength="9" required placeholder="9 caratteri">
+          <p class="form-error" id="login-error" role="alert" hidden></p>
+          <p><button type="submit" class="btn btn-primary w-100" id="login-button">Accedi</button></p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pannello -->
+  <div id="admin-page" hidden>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <svg viewBox="0 0 32 32" role="img" aria-label="Logo URL Follower">
+          <rect width="32" height="32" rx="8" fill="#066FD1"/>
+          <path d="M9 22 L16 16 L23 10" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <circle cx="9" cy="22" r="3" fill="#fff"/>
+          <circle cx="23" cy="10" r="3.5" fill="#F59F00"/>
+        </svg>
+        <strong>URL Follower</strong>
+        <div class="who">
+          <div id="logged-user"></div>
+          <a href="#" id="logout-button">Esci</a>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="alert" id="message" role="status" hidden>
+        <span id="message-text"></span>
+        <button type="button" id="message-close" aria-label="Chiudi">&times;</button>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Gestione utenti</h2>
+          <div class="card-actions">
+            <button type="button" class="btn btn-primary" id="add-user-button">Crea utente</button>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table>
+            <thead><tr><th>Utente</th><th>Chiave API</th><th>Admin</th><th>Disponibile</th><th>Azioni</th></tr></thead>
+            <tbody id="user-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">URL monitorati</h2>
+          <div class="card-actions">
+            <div class="btn-list">
+              <button type="button" class="btn btn-primary" id="add-url-button">Aggiungi URL</button>
+              <button type="button" class="btn btn-primary" id="check-all-button">Controlla tutti</button>
+            </div>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table>
+            <thead><tr><th>URL</th><th>Stato</th><th>Ultimo controllo</th><th>Azioni</th></tr></thead>
+            <tbody id="url-table-body"></tbody>
+          </table>
+        </div>
+        <p class="empty" id="url-empty" hidden>Non stai monitorando nessun indirizzo. Premi Aggiungi URL per inserire il primo.</p>
+      </div>
+    </main>
+  </div>
+
+  <dialog id="add-url-modal" aria-labelledby="add-url-title">
+    <form id="add-url-form">
+      <div class="dialog-body">
+        <h2 id="add-url-title">Aggiungi URL</h2>
+        <label for="new-url">Indirizzo da monitorare</label>
+        <input type="text" id="new-url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://esempio.it">
+        <p class="hint">Sono ammessi solo indirizzi pubblici http o https. Se l'indirizzo viene reindirizzato, l'elenco salva la destinazione.</p>
+        <p class="form-error" id="add-url-error" role="alert" hidden></p>
+      </div>
+      <div class="dialog-footer">
+        <button type="button" class="btn btn-link" id="add-url-cancel">Annulla</button>
+        <button type="submit" class="btn btn-primary" id="add-url-submit">Aggiungi</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="add-user-modal" aria-labelledby="add-user-title">
+    <form id="add-user-form">
+      <div class="dialog-body">
+        <h2 id="add-user-title">Crea utente</h2>
+        <label for="new-username">Nome utente</label>
+        <input type="text" id="new-username" maxlength="50" autocomplete="off">
+        <label class="check"><input type="checkbox" id="new-user-admin"> Amministratore</label>
+        <label class="check"><input type="checkbox" id="new-user-available" checked> Disponibile</label>
+        <p class="hint">La chiave API di 9 caratteri viene generata automaticamente.</p>
+        <p class="form-error" id="add-user-error" role="alert" hidden></p>
+      </div>
+      <div class="dialog-footer">
+        <button type="button" class="btn btn-link" id="add-user-cancel">Annulla</button>
+        <button type="submit" class="btn btn-primary" id="add-user-submit">Crea</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="admin.js"></script>
+</body>
+</html>
