@@ -7,8 +7,9 @@ services:
       # Formato: <app-id>_<nome-servizio-docker>_1
       APP_HOST: gianmaria-url-follower_web_1
       APP_PORT: 8080
-      # L'app ha un suo accesso con chiave API: niente login di Umbrel davanti
-      PROXY_AUTH_ADD: "false"
+      # Il pannello e le API di gestione restano dietro il login di Umbrel.
+      # Solo gli indirizzi che iniziano con /api= (elenco in testo semplice) sono pubblici.
+      PROXY_AUTH_WHITELIST: "/api=*"
 
   web:
     # Immagine ufficiale di Python: il codice dell'app è in app/app.py
@@ -21,8 +22,6 @@ services:
       PYTHONDONTWRITEBYTECODE: "1"
       WWW_DIR: /www
       DATA_DIR: /data
-      # Password mostrata da Umbrel tra le credenziali dell'app
-      APP_PASSWORD: ${APP_PASSWORD}
       # Ogni quanti minuti controllare tutti gli URL (0 = mai)
       CHECK_INTERVAL_MINUTES: "10"
     volumes:

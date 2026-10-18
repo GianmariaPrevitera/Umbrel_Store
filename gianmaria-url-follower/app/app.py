@@ -2,24 +2,23 @@
 """URL Follower - monitor di URL con pannello amministrativo.
 
 Pagine e API:
-  GET  /                    pannello amministrativo (login con la password
-                            mostrata da Umbrel tra le credenziali dell'app)
+  GET  /                    pannello di gestione (URL e utenti)
   GET  /api=<chiave>        testo semplice: gli URL online, uno per riga.
                             Chiave non valida o utente non disponibile:
                             pagina web vuota, sempre con risposta 200.
-  /api/...                  API JSON usate dal pannello (solo amministratori)
+  /api/...                  API JSON usate dal pannello
+
+L'app NON ha un login proprio: l'accesso al pannello e alle API /api/... è
+protetto dal login di Umbrel (app_proxy). Solo /api=<chiave> è pubblico
+(PROXY_AUTH_WHITELIST nel docker-compose.yml).
 
 Controllo periodico: un thread interno controlla tutti gli URL ogni
 CHECK_INTERVAL_MINUTES minuti (0 = disattivato). In alternativa:
   python app.py --check-urls        controlla subito tutti gli URL
-  python app.py --show-admin-keys   mostra le chiavi degli amministratori
 
 Usa solo la libreria standard di Python: nessuna dipendenza da installare.
 """
-import base64
 import contextlib
-import hashlib
-import hmac
 import http.client
 import ipaddress
 import json
@@ -34,7 +33,6 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
-from http.cookies import CookieError, SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import quote, urljoin, urlsplit
 
@@ -46,11 +44,6 @@ PORT = int(os.environ.get("PORT", "8080"))
 WWW_DIR = os.path.realpath(os.environ.get("WWW_DIR", "/www"))
 DATA_DIR = os.environ.get("DATA_DIR", "/data")
 DATABASE = os.path.join(DATA_DIR, "app.db")
-
-# Account principale. La sua password è APP_PASSWORD, la password che Umbrel
-# mostra tra le credenziali dell'app (deterministicPassword nel manifest).
-ADMIN_USERNAME = os.environ.get("INITIAL_USERNAME", "Admin")
-ADMIN_PASSWORD = os.environ.get("APP_PASSWORD", "")
 
 try:
     CHECK_INTERVAL = float(os.environ.get("CHECK_INTERVAL_MINUTES", "10")) * 60
@@ -73,8 +66,6 @@ MAX_URL_LENGTH = 2048
 ALLOWED_URL_PORTS = {80, 443}
 
 MAX_BODY = 4096
-SESSION_SECONDS = 12 * 3600
-SESSION_SECRET = b""  # impostato all'avvio
 
 # Al massimo 8 controlli in uscita contemporanei.
 check_slots = threading.BoundedSemaphore(8)
@@ -93,14 +84,6 @@ class ApiError(Exception):
 
 def now_iso():
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-
-
-def b64(data):
-    return base64.urlsafe_b64encode(data).decode("ascii").rstrip("=")
-
-
-def unb64(text):
-    return base64.urlsafe_b64decode(text + "=" * (-len(text) % 4))
 
 
 # ============================================================
@@ -348,7 +331,6 @@ def scheduler_loop():
 # ============================================================
 
 RATE_LIMITS = {
-    "login": (10, 60),
     "public": (60, 60),
     "url_check": (30, 60),
     "check_all": (3, 60),
@@ -422,7 +404,6 @@ def initialize_database():
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 nomeutente TEXT UNIQUE NOT NULL,
                 apikey TEXT UNIQUE NOT NULL,
-                admin INTEGER NOT NULL DEFAULT 0,
                 available INTEGER NOT NULL DEFAULT 1
             )""")
         conn.execute("""
@@ -432,29 +413,6 @@ def initialize_database():
                 stato INTEGER NOT NULL DEFAULT 0,
                 last_check TEXT
             )""")
-        has_admin = conn.execute("SELECT 1 FROM users WHERE admin = 1").fetchone()
-        if has_admin is None:
-            api_key = generate_unique_api_key(conn)
-            conn.execute(
-                "INSERT OR IGNORE INTO users (nomeutente, apikey, admin, available) VALUES (?, ?, 1, 1)",
-                (ADMIN_USERNAME, api_key))
-            if ADMIN_PASSWORD:
-                print("Creato l'amministratore '%s'." % ADMIN_USERNAME, flush=True)
-            else:
-                # Senza APP_PASSWORD (esecuzione fuori da Umbrel) si entra con la chiave API.
-                print("Creato l'amministratore '%s'. Chiave API: %s" % (ADMIN_USERNAME, api_key), flush=True)
-
-
-def ensure_owner_admin():
-    """L'account principale esiste ed è amministratore (chi conosce la password di Umbrel non resta mai fuori)."""
-    with db() as conn:
-        row = conn.execute("SELECT id, admin FROM users WHERE nomeutente = ?", (ADMIN_USERNAME,)).fetchone()
-        if row is None:
-            conn.execute("INSERT INTO users (nomeutente, apikey, admin, available) VALUES (?, ?, 1, 1)",
-                         (ADMIN_USERNAME, generate_unique_api_key(conn)))
-        elif row["admin"] != 1:
-            conn.execute("UPDATE users SET admin = 1 WHERE id = ?", (row["id"],))
-    return ADMIN_USERNAME
 
 
 def get_user_by_api_key(api_key):
@@ -462,59 +420,8 @@ def get_user_by_api_key(api_key):
         return None
     with db() as conn:
         return conn.execute(
-            "SELECT id, nomeutente, apikey, admin, available FROM users WHERE apikey = ?",
+            "SELECT id, nomeutente, available FROM users WHERE apikey = ?",
             (api_key,)).fetchone()
-
-
-# ============================================================
-# SESSIONI (cookie firmato; amministratore verificato nel database a ogni richiesta)
-# ============================================================
-
-def load_secret():
-    path = os.path.join(DATA_DIR, "secret.key")
-    try:
-        with open(path, "rb") as handle:
-            data = handle.read()
-        if len(data) >= 32:
-            return data
-    except OSError:
-        pass
-    data = secrets.token_bytes(32)
-    try:
-        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-        with os.fdopen(fd, "wb") as handle:
-            handle.write(data)
-    except OSError as error:
-        print("Impossibile salvare la chiave di sessione (%s): le sessioni "
-              "scadranno al riavvio." % error, file=sys.stderr, flush=True)
-    return data
-
-
-def sign(raw):
-    return b64(hmac.new(SESSION_SECRET, raw.encode("ascii"), hashlib.sha256).digest())
-
-
-def make_session(username):
-    raw = b64(json.dumps({"u": username, "exp": int(time.time()) + SESSION_SECONDS}).encode("utf-8"))
-    return raw + "." + sign(raw)
-
-
-def read_session(cookie_header):
-    if not cookie_header:
-        return None
-    try:
-        jar = SimpleCookie()
-        jar.load(cookie_header)
-        value = jar["session"].value
-        raw, signature = value.split(".", 1)
-        if not hmac.compare_digest(signature, sign(raw)):
-            return None
-        payload = json.loads(unb64(raw).decode("utf-8"))
-        if payload["exp"] < time.time():
-            return None
-        return payload["u"]
-    except (CookieError, KeyError, ValueError, TypeError, UnicodeError):
-        return None
 
 
 # ============================================================
@@ -532,7 +439,7 @@ BASE_HEADERS = {
 }
 CSP_PAGE = ("default-src 'none'; style-src 'unsafe-inline'; img-src data:; "
             "base-uri 'none'; frame-ancestors 'none'")
-CSP_ADMIN = ("default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; "
+CSP_APP = ("default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; "
              "img-src data:; connect-src 'self'; form-action 'self'; "
              "base-uri 'none'; frame-ancestors 'none'")
 
@@ -540,8 +447,6 @@ ROUTES = [
     ("GET", r"/", "h_page", "public"),
     ("GET", r"/app\.js", "h_app_js", "public"),
     ("GET", r"/api=(.*)", "h_public_list", "public"),
-    ("POST", r"/api/login", "h_login", "login"),
-    ("POST", r"/api/logout", "h_logout", None),
     ("GET", r"/api/urls", "h_urls_list", None),
     ("POST", r"/api/urls", "h_urls_add", "url_check"),
     ("POST", r"/api/urls/check-all", "h_urls_check_all", "check_all"),
@@ -576,13 +481,11 @@ class Handler(BaseHTTPRequestHandler):
         proxy stesso e non falsificabile dal client.
         """
         peer = self.client_address[0]
-        self.trusted_proxy = False
         try:
             peer_ip = ipaddress.ip_address(peer)
         except ValueError:
             return peer
         if not peer_ip.is_global:
-            self.trusted_proxy = True
             forwarded = self.headers.get("X-Forwarded-For", "")
             if forwarded:
                 try:
@@ -634,21 +537,6 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError, UnicodeError):
             raise ApiError(400, "Richiesta non valida")
         return data if isinstance(data, dict) else {}
-
-    def current_admin(self):
-        username = read_session(self.headers.get("Cookie"))
-        if not username:
-            return None
-        with db() as conn:
-            row = conn.execute(
-                "SELECT id, nomeutente, admin FROM users WHERE nomeutente = ?", (username,)).fetchone()
-        return row if row is not None and row["admin"] == 1 else None
-
-    def require_admin(self):
-        admin = self.current_admin()
-        if admin is None:
-            raise ApiError(401, "Non autorizzato")
-        return admin
 
     # ---- dispatch
     def do_GET(self):
@@ -709,10 +597,10 @@ class Handler(BaseHTTPRequestHandler):
 
     # ---- pagine
     def h_page(self):
-        self.send_file("index.html", "text/html; charset=utf-8", csp=CSP_ADMIN)
+        self.send_file("index.html", "text/html; charset=utf-8", csp=CSP_APP)
 
     def h_app_js(self):
-        self.send_file("app.js", "application/javascript; charset=utf-8", csp=CSP_ADMIN)
+        self.send_file("app.js", "application/javascript; charset=utf-8", csp=CSP_APP)
 
     def h_public_list(self, key):
         user = get_user_by_api_key(key)
@@ -722,34 +610,6 @@ class Handler(BaseHTTPRequestHandler):
             rows = conn.execute("SELECT url FROM urls WHERE stato = 1 ORDER BY url").fetchall()
         self.send_text(200, "\n".join(row["url"] for row in rows))
 
-    # ---- accesso
-    def h_login(self):
-        credential = self.read_json().get("password")
-        if not isinstance(credential, str) or not credential or len(credential) > 256:
-            raise ApiError(401, "Password non valida")
-        if ADMIN_PASSWORD and hmac.compare_digest(credential.encode("utf-8"), ADMIN_PASSWORD.encode("utf-8")):
-            # Password mostrata da Umbrel: accesso come account principale.
-            username = ensure_owner_admin()
-        else:
-            # Chiave API di un amministratore.
-            user = get_user_by_api_key(credential)
-            if user is None:
-                raise ApiError(401, "Password non valida")
-            # "available" non viene controllato qui: un amministratore non
-            # disponibile può comunque entrare nel pannello.
-            if user["admin"] != 1:
-                raise ApiError(403, "Accesso amministrativo non autorizzato")
-            username = user["nomeutente"]
-        cookie = "session=%s; Path=/; Max-Age=%d; HttpOnly; SameSite=Strict" % (
-            make_session(username), SESSION_SECONDS)
-        if self.trusted_proxy and self.headers.get("X-Forwarded-Proto", "").split(",")[-1].strip() == "https":
-            cookie += "; Secure"
-        self.send_json(200, {"success": True, "username": username}, extra={"Set-Cookie": cookie})
-
-    def h_logout(self):
-        self.send_json(200, {"success": True}, extra={
-            "Set-Cookie": "session=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict"})
-
     # ---- URL monitorati
     def urls_payload(self):
         with db() as conn:
@@ -757,11 +617,9 @@ class Handler(BaseHTTPRequestHandler):
         return {"urls": [dict(row) for row in rows]}
 
     def h_urls_list(self):
-        self.require_admin()
         self.send_json(200, self.urls_payload())
 
     def h_urls_add(self):
-        self.require_admin()
         url = self.read_json().get("url", "")
         if not isinstance(url, str) or not url.strip():
             raise ApiError(400, "URL mancante")
@@ -781,7 +639,6 @@ class Handler(BaseHTTPRequestHandler):
                              "stato": stato, "last_check": last_check})
 
     def h_urls_delete(self, url_id):
-        self.require_admin()
         with db() as conn:
             cursor = conn.execute("DELETE FROM urls WHERE id = ?", (int(url_id),))
         if cursor.rowcount == 0:
@@ -789,7 +646,6 @@ class Handler(BaseHTTPRequestHandler):
         self.send_json(200, {"success": True})
 
     def h_urls_check(self, url_id):
-        self.require_admin()
         result = check_single_url(int(url_id))
         if result is None:
             raise ApiError(404, "URL non trovato")
@@ -797,7 +653,6 @@ class Handler(BaseHTTPRequestHandler):
         self.send_json(200, result)
 
     def h_urls_check_all(self):
-        self.require_admin()
         with db() as conn:
             ids = [r["id"] for r in conn.execute("SELECT id FROM urls ORDER BY url")]
 
@@ -811,93 +666,55 @@ class Handler(BaseHTTPRequestHandler):
             list(pool.map(safe_check, ids))
         self.send_json(200, self.urls_payload())
 
-    # ---- utenti
+    # ---- utenti (titolari di una chiave API per /api=<chiave>)
     def h_users_list(self):
-        admin = self.require_admin()
         with db() as conn:
             rows = conn.execute(
-                "SELECT id, nomeutente, apikey, admin, available FROM users ORDER BY nomeutente").fetchall()
-        users = []
-        for row in rows:
-            # Le chiavi degli altri amministratori non vengono mai mostrate.
-            visible = row["nomeutente"] == admin["nomeutente"] or row["admin"] == 0
-            users.append({"id": row["id"], "nomeutente": row["nomeutente"],
-                          "apikey": row["apikey"] if visible else "*********",
-                          "admin": row["admin"], "available": row["available"]})
-        self.send_json(200, {"users": users})
+                "SELECT id, nomeutente, apikey, available FROM users ORDER BY nomeutente").fetchall()
+        self.send_json(200, {"users": [dict(row) for row in rows]})
 
     def h_users_add(self):
-        self.require_admin()
         data = self.read_json()
         username = data.get("username", "")
-        admin = data.get("admin", 0)
         available = data.get("available", 1)
         if not isinstance(username, str) or not username.strip():
             raise ApiError(400, "Nome utente mancante")
         username = username.strip()
         if len(username) > 50:
             raise ApiError(400, "Il nome utente è troppo lungo")
-        if admin not in BOOLEAN_VALUES:
-            raise ApiError(400, "Valore amministratore non valido")
         if available not in BOOLEAN_VALUES:
             raise ApiError(400, "Valore disponibilità non valido")
-        admin = 1 if admin else 0
         available = 1 if available else 0
         try:
             with db() as conn:
                 api_key = generate_unique_api_key(conn)
                 cursor = conn.execute(
-                    "INSERT INTO users (nomeutente, apikey, admin, available) VALUES (?, ?, ?, ?)",
-                    (username, api_key, admin, available))
+                    "INSERT INTO users (nomeutente, apikey, available) VALUES (?, ?, ?)",
+                    (username, api_key, available))
                 new_id = cursor.lastrowid
         except sqlite3.IntegrityError:
             raise ApiError(409, "Nome utente già presente")
         self.send_json(201, {"success": True, "id": new_id, "username": username,
-                             "apikey": api_key, "admin": admin, "available": available})
+                             "apikey": api_key, "available": available})
 
     def h_users_update(self, user_id):
-        self.require_admin()
         data = self.read_json()
-        if "admin" not in data and "available" not in data:
+        if "available" not in data:
             raise ApiError(400, "Nessun valore da modificare")
+        if data["available"] not in BOOLEAN_VALUES:
+            raise ApiError(400, "Valore disponibilità non valido")
+        available = 1 if data["available"] else 0
         with db() as conn:
-            user = conn.execute("SELECT id, nomeutente, admin, available FROM users WHERE id = ?",
-                                (int(user_id),)).fetchone()
-            if user is None:
-                raise ApiError(404, "Utente non trovato")
-            new_admin, new_available = user["admin"], user["available"]
-            if "admin" in data:
-                if data["admin"] not in BOOLEAN_VALUES:
-                    raise ApiError(400, "Valore amministratore non valido")
-                new_admin = 1 if data["admin"] else 0
-            if "available" in data:
-                if data["available"] not in BOOLEAN_VALUES:
-                    raise ApiError(400, "Valore disponibilità non valido")
-                new_available = 1 if data["available"] else 0
-            # Protezione dell'ultimo amministratore.
-            if user["admin"] == 1 and new_admin == 0:
-                count = conn.execute("SELECT COUNT(*) FROM users WHERE admin = 1").fetchone()[0]
-                if count <= 1:
-                    raise ApiError(400, "Non puoi rimuovere l'ultimo amministratore")
-            conn.execute("UPDATE users SET admin = ?, available = ? WHERE id = ?",
-                         (new_admin, new_available, user["id"]))
-        self.send_json(200, {"success": True, "username": user["nomeutente"],
-                             "admin": new_admin, "available": new_available})
+            cursor = conn.execute("UPDATE users SET available = ? WHERE id = ?", (available, int(user_id)))
+        if cursor.rowcount == 0:
+            raise ApiError(404, "Utente non trovato")
+        self.send_json(200, {"success": True, "available": available})
 
     def h_users_delete(self, user_id):
-        current = self.require_admin()
         with db() as conn:
-            row = conn.execute("SELECT id, nomeutente, admin FROM users WHERE id = ?",
-                               (int(user_id),)).fetchone()
-            if row is None:
-                raise ApiError(404, "Utente non trovato")
-            if row["nomeutente"] == current["nomeutente"]:
-                raise ApiError(400, "Non puoi eliminare l'utente attualmente autenticato")
-            if row["admin"] == 1:
-                count = conn.execute("SELECT COUNT(*) FROM users WHERE admin = 1").fetchone()[0]
-                if count <= 1:
-                    raise ApiError(400, "Non puoi eliminare l'ultimo amministratore")
-            conn.execute("DELETE FROM users WHERE id = ?", (row["id"],))
+            cursor = conn.execute("DELETE FROM users WHERE id = ?", (int(user_id),))
+        if cursor.rowcount == 0:
+            raise ApiError(404, "Utente non trovato")
         self.send_json(200, {"success": True})
 
 
@@ -906,7 +723,6 @@ class Handler(BaseHTTPRequestHandler):
 # ============================================================
 
 def main():
-    global SESSION_SECRET
     try:
         initialize_database()
     except (OSError, sqlite3.Error) as error:
@@ -916,13 +732,7 @@ def main():
     if "--check-urls" in sys.argv:
         check_all_urls()
         return
-    if "--show-admin-keys" in sys.argv:
-        with db() as conn:
-            for row in conn.execute("SELECT nomeutente, apikey FROM users WHERE admin = 1 ORDER BY nomeutente"):
-                print("%s: %s" % (row["nomeutente"], row["apikey"]))
-        return
 
-    SESSION_SECRET = load_secret()
     threading.Thread(target=cleanup_rate_limit_store, daemon=True).start()
     if CHECK_INTERVAL > 0:
         threading.Thread(target=scheduler_loop, daemon=True).start()
