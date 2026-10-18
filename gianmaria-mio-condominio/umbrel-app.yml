@@ -1,0 +1,21 @@
+manifestVersion: 1
+id: gianmaria-mio-condominio
+category: finance
+name: Mio Condominio
+version: "1.0.0"
+tagline: Il tuo condominio, a portata di mano
+description: >-
+  Mio Condominio è una semplice pagina web per la gestione del condominio.
+  Questa prima versione mostra soltanto una pagina di benvenuto.
+developer: Gianmaria Previtera
+website: https://github.com/GianmariaPrevitera/Umbrel_Store
+submitter: Gianmaria Previtera
+submission: https://github.com/GianmariaPrevitera/Umbrel_Store
+repo: https://github.com/GianmariaPrevitera/Umbrel_Store
+support: https://github.com/GianmariaPrevitera/Umbrel_Store/issues
+port: 3871
+gallery: []
+path: ""
+defaultPassword: ""
+releaseNotes: >-
+  Prima versione: pagina web semplice basata su Tabler.
