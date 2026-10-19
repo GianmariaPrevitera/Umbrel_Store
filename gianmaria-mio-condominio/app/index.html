@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Mio Condominio</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0/dist/css/tabler.min.css">
+</head>
+<body>
+  <div class="page">
+    <header class="navbar navbar-expand-md d-print-none">
+      <div class="container-xl">
+        <span class="navbar-brand">🏢 Mio Condominio</span>
+        <div class="ms-auto d-flex align-items-center gap-3">
+          <span class="text-secondary small" id="ultimo"></span>
+          <button class="btn btn-primary" id="btn-sync">Aggiorna da Danea</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="page-wrapper">
+      <div class="page-header d-print-none">
+        <div class="container-xl"><h2 class="page-title">📑 Situazione Rate</h2></div>
+      </div>
+      <div class="page-body">
+        <div class="container-xl">
+          <div class="row row-cards mb-3" id="riepilogo"></div>
+          <div id="gruppi"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0/dist/js/tabler.min.js"></script>
+  <script>
+    const euro = n => new Intl.NumberFormat('it-IT', {style: 'currency', currency: 'EUR'}).format(n);
+    const dataIt = s => s ? s.split('-').reverse().join('/') : '—';
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const colori = {'PAGATA':'success', 'SCADUTA':'danger', 'IN SCADENZA':'warning', 'DA PAGARE':'secondary'};
+
+    function card(titolo, valore, classe = '') {
+      return `<div class="col-sm-6 col-lg-4"><div class="card"><div class="card-body">
+        <div class="subheader">${titolo}</div><div class="h2 mb-0 ${classe}">${valore}</div></div></div></div>`;
+    }
+
+    async function carica() {
+      const r = await fetch('api/rate');
+      const d = await r.json();
+      const t = d.totali;
+      document.getElementById('riepilogo').innerHTML =
+        card('Ancora da pagare', euro(t.da_pagare)) +
+        card('Di cui scadute', euro(t.scadute), t.scadute > 0 ? 'text-danger' : '') +
+        card('Prossima scadenza', dataIt(t.prossima_scadenza));
+
+      const el = document.getElementById('gruppi');
+      if (!d.gruppi.length) {
+        el.innerHTML = '<div class="alert alert-info">Nessuna rata presente. Premi «Aggiorna da Danea».</div>';
+        return;
+      }
+      el.innerHTML = d.gruppi.map(g => `
+        <div class="card mb-3">
+          <div class="card-header"><h3 class="card-title">${esc(g.tipo)}</h3></div>
+          <div class="table-responsive">
+            <table class="table table-vcenter card-table">
+              <thead><tr><th>Scadenza</th><th>Descrizione</th><th class="text-end">Dovuto</th><th>Stato</th></tr></thead>
+              <tbody>${g.rate.map(x => `
+                <tr>
+                  <td>${dataIt(x.data)}</td>
+                  <td>${esc(x.descrizione)}</td>
+                  <td class="text-end">${euro(x.dovuto)}</td>
+                  <td><span class="badge bg-${colori[x.stato_label]}-lt">${x.stato_label}</span>
+                      ${x.data_pagamento ? `<span class="text-secondary small ms-1">il ${dataIt(x.data_pagamento)}</span>` : ''}</td>
+                </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>`).join('');
+    }
+
+    async function stato() {
+      const s = await (await fetch('api/status')).json();
+      document.getElementById('ultimo').textContent =
+        s.running ? 'Aggiornamento in corso…' :
+        s.last_run ? 'Ultimo import: ' + s.last_run.replace('T', ' ') + (s.ok ? '' : ' (fallito)') : '';
+      return s;
+    }
+
+    document.getElementById('btn-sync').addEventListener('click', async e => {
+      e.target.disabled = true;
+      await fetch('api/sync', {method: 'POST'});
+      const attesa = setInterval(async () => {
+        const s = await stato();
+        if (!s.running) { clearInterval(attesa); e.target.disabled = false; carica(); }
+      }, 1500);
+    });
+
+    carica(); stato();
+  </script>
+</body>
+</html>

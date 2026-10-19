@@ -2,11 +2,11 @@ manifestVersion: 1
 id: gianmaria-mio-condominio
 category: finance
 name: Mio Condominio
-version: "1.0.0"
+version: "1.1.1"
 tagline: Il tuo condominio, a portata di mano
 description: >-
-  Mio Condominio è una semplice pagina web per la gestione del condominio.
-  Questa prima versione mostra soltanto una pagina di benvenuto.
+  Mio Condominio importa le rate da Danea MioCondominio e le mostra in una
+  pagina web con riepilogo, scadenze e stato di pagamento.
 developer: Gianmaria Previtera
 website: https://github.com/GianmariaPrevitera/Umbrel_Store
 submitter: Gianmaria Previtera
@@ -18,4 +18,5 @@ gallery: []
 path: ""
 defaultPassword: ""
 releaseNotes: >-
-  Prima versione: pagina web semplice basata su Tabler.
+  Import delle rate da Danea (riscritto in Python), database SQLite e pagina
+  index.html con Tabler. Corretto l'URL di import delle rate (payments).

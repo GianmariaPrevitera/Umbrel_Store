@@ -4,10 +4,17 @@ services:
   app_proxy:
     environment:
       APP_HOST: gianmaria-mio-condominio_web_1
-      APP_PORT: 80
+      APP_PORT: 8080
 
   web:
-    image: nginx:1.27-alpine
+    image: python:3.12-alpine
     restart: on-failure
+    working_dir: /app
+    command: python -u /app/server.py
+    environment:
+      PORT: "8080"
+      DB_PATH: /data/Condominio.db
+      TZ: Europe/Rome
     volumes:
-      - ${APP_DATA_DIR}/html:/usr/share/nginx/html:ro
+      - ${APP_DATA_DIR}/app:/app:ro
+      - ${APP_DATA_DIR}/data:/data
