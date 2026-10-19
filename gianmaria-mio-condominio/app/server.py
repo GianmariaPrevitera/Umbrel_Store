@@ -83,14 +83,18 @@ def get_db():
 # CLIENT DANEA
 # ======================================
 
-def http_json(url, payload=None, token=None):
-    headers = {"Accept": "application/json"}
+def http_json(url, payload=None, token=None, accept=False):
+    """Come le chiamate curl del PHP: Content-Type solo sul login (POST),
+    Authorization sulle chiamate autenticate, Accept solo in importa_dati."""
+    headers = {}
     data = None
     if payload is not None:
         data = json.dumps(payload).encode()
         headers["Content-Type"] = "application/json"
     if token:
         headers["Authorization"] = f"Bearer {token}"
+    if accept:
+        headers["Accept"] = "application/json"
     req = urllib.request.Request(url, data=data, headers=headers)
     try:
         with urllib.request.urlopen(req, timeout=30) as resp:
@@ -102,24 +106,6 @@ def http_json(url, payload=None, token=None):
     return None
 
 
-def as_list(x):
-    """Danea a volte risponde con una lista, a volte con un oggetto che la contiene."""
-    if isinstance(x, list):
-        return x
-    if isinstance(x, dict):
-        for v in x.values():
-            if isinstance(v, list):
-                return v
-    return []
-
-
-def pick(d, *keys):
-    for k in keys:
-        if isinstance(d, dict) and d.get(k) is not None:
-            return d[k]
-    return None
-
-
 def login():
     json_resp = http_json(
         LOGIN_URL,
@@ -127,11 +113,10 @@ def login():
     )
     if not json_resp or "access_token" not in json_resp:
         return None
-    try:
-        user_id = json_resp["profile"]["sub"].split("##")[2]
-    except (KeyError, IndexError):
-        user_id = None
-    return {"token": json_resp["access_token"], "user_id": user_id}
+    return {
+        "token": json_resp["access_token"],
+        "user_id": json_resp["profile"]["sub"].split("##")[2],
+    }
 
 
 # ======================================
@@ -139,7 +124,7 @@ def login():
 # ======================================
 
 def importa_dati(db, url, tipo, token):
-    resp = http_json(url, token=token)
+    resp = http_json(url, token=token, accept=True)
     if not isinstance(resp, dict) or "rate" not in resp:
         log(f"Nessuna rata in {url}")
         return 0

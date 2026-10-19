@@ -2,7 +2,7 @@ manifestVersion: 1
 id: gianmaria-mio-condominio
 category: finance
 name: Mio Condominio
-version: "1.1.1"
+version: "1.1.3"
 tagline: Il tuo condominio, a portata di mano
 description: >-
   Mio Condominio importa le rate da Danea MioCondominio e le mostra in una
@@ -19,4 +19,4 @@ path: ""
 defaultPassword: ""
 releaseNotes: >-
   Import delle rate da Danea (riscritto in Python), database SQLite e pagina
-  index.html con Tabler. Corretto l'URL di import delle rate (payments).
+  index.html con Tabler. Corretto l'URL di import delle rate (payments). Login e chiamate Danea riallineati al codice PHP originale.
