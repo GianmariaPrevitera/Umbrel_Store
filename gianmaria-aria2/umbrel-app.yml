@@ -2,7 +2,7 @@ manifestVersion: 1
 id: gianmaria-aria2
 category: files
 name: aria2
-version: "1.2.1"
+version: "1.2.7"
 tagline: Download manager con interfaccia web
 description: >-
   aria2 è un download manager leggero e velocissimo, con interfaccia web Aria2 WebUI.
@@ -16,12 +16,13 @@ description: >-
 
   Al primo accesso apri le impostazioni di Aria2 WebUI (Connection Settings) e inserisci come Secret Token la password mostrata da umbrelOS nella pagina dell'app. Al primo avvio vengono scaricati aria2 e l'interfaccia, quindi serve connessione a internet.
 releaseNotes: >-
-  Corretto il collegamento RPC: l'interfaccia ora raggiunge aria2 tramite /jsonrpc sulla stessa porta dell'app (prima dava 404). La porta 6800 non è più esposta sulla rete.
+  Ripristinata l'icona con sfondo blu piatto e base arancione.
 developer: Gianmaria
 website: https://aria2.github.io
 dependencies: []
 repo: https://github.com/GianmariaPrevitera/Umbrel_Store
 support: https://github.com/GianmariaPrevitera/Umbrel_Store/issues
+icon: https://raw.githubusercontent.com/GianmariaPrevitera/Umbrel_Store/main/gianmaria-aria2/icon.svg
 port: 6880
 gallery: []
 path: ""
