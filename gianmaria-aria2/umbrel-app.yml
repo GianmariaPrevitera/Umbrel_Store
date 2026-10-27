@@ -2,7 +2,6 @@ manifestVersion: 1
 id: gianmaria-aria2
 category: files
 name: aria2
-icon: https://raw.githubusercontent.com/GianmariaPrevitera/Umbrel_Store/master/gianmaria-aria2/icon.svg
 version: "1.2.7"
 tagline: Download manager con interfaccia web
 description: >-
