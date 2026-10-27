@@ -22,7 +22,7 @@ website: https://aria2.github.io
 dependencies: []
 repo: https://github.com/GianmariaPrevitera/Umbrel_Store
 support: https://github.com/GianmariaPrevitera/Umbrel_Store/issues
-icon: https://raw.githubusercontent.com/GianmariaPrevitera/Umbrel_Store/main/gianmaria-aria2/icon.svg
+icon: https://raw.githubusercontent.com/GianmariaPrevitera/Umbrel_Store/master/gianmaria-aria2/icon.svg
 port: 6880
 gallery: []
 path: ""
