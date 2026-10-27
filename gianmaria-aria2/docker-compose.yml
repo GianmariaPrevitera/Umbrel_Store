@@ -1,0 +1,39 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: gianmaria-aria2_ariang_1
+      APP_PORT: 6880
+
+  aria2:
+    image: p3terx/aria2-pro:202209060423
+    restart: on-failure
+    environment:
+      PUID: 1000
+      PGID: 1000
+      UMASK_SET: "022"
+      RPC_SECRET: ${APP_PASSWORD}
+      RPC_PORT: 6800
+      LISTEN_PORT: 6888
+      DISK_CACHE: 64M
+      IPV6_MODE: "false"
+    ports:
+      # RPC: AriaNg gira nel browser e si collega direttamente qui (protetto da RPC_SECRET)
+      - "6800:6800"
+      # BitTorrent / DHT
+      - "6888:6888"
+      - "6888:6888/udp"
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+      - ${UMBREL_ROOT}/data/storage/downloads:/downloads
+
+  ariang:
+    image: p3terx/ariang:latest
+    restart: on-failure
+    command: --port 6880
+    environment:
+      PUID: 1000
+      PGID: 1000
+      ARIA2RPCPORT: 6800
+      RPC_SECRET: ${APP_PASSWORD}

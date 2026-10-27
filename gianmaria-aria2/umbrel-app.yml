@@ -1,0 +1,31 @@
+manifestVersion: 1
+id: gianmaria-aria2
+category: files
+name: aria2
+version: "1.0.0"
+tagline: Download manager con interfaccia web
+description: >-
+  aria2 è un download manager leggero e velocissimo, con interfaccia web AriaNg.
+
+
+  Supporta HTTP, HTTPS, FTP, SFTP, BitTorrent, magnet link e Metalink, con download multi-connessione e possibilità di scegliere quali file scaricare da un torrent.
+
+
+  I file vengono salvati nella cartella Downloads di umbrelOS.
+
+
+  Al primo accesso, se AriaNg chiede il token RPC, usa la password mostrata da umbrelOS nella pagina dell'app.
+releaseNotes: >-
+  Prima versione: aria2 (aria2-pro) con interfaccia AriaNg.
+developer: Gianmaria
+website: https://aria2.github.io
+dependencies: []
+repo: https://github.com/GianmariaPrevitera/Umbrel_Store
+support: https://github.com/GianmariaPrevitera/Umbrel_Store/issues
+port: 6880
+gallery: []
+path: ""
+defaultPassword: ""
+deterministicPassword: true
+submitter: Gianmaria
+submission: https://github.com/GianmariaPrevitera/Umbrel_Store
