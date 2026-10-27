@@ -4,7 +4,6 @@ category: files
 name: aria2
 version: "1.2.7"
 tagline: Download manager con interfaccia web
-icon: https://raw.githubusercontent.com/GianmariaPrevitera/Umbrel_Store/refs/heads/master/gianmaria-aria2/icon.svg
 description: >-
   aria2 è un download manager leggero e velocissimo, con interfaccia web Aria2 WebUI.
 
