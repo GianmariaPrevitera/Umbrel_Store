@@ -1,0 +1,29 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: gianmaria-adecco_web_1
+      APP_PORT: 80
+
+  web:
+    image: php:8.3-apache
+    restart: on-failure
+    environment:
+      TZ: Europe/Rome
+      # Credenziali BadgeBox: lette da presenze.php a ogni richiesta.
+      ENV_FILE: /data/.env
+    volumes:
+      # Pagina e backend (index.html + presenze.php), in sola lettura.
+      - ${APP_DATA_DIR}/www:/var/www/html:ro
+      # Dati persistenti: qui sta il .env con le credenziali (fuori dalla cartella web).
+      - ${APP_DATA_DIR}/data:/data
+    command:
+      - sh
+      - -c
+      - |
+        mkdir -p /data
+        [ -f /data/.env ] || printf 'USERNAME=\nPASSWORD=\n' > /data/.env
+        chown www-data:www-data /data/.env
+        chmod 600 /data/.env
+        exec apache2-foreground
