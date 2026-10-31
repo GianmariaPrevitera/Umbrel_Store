@@ -220,9 +220,16 @@ function leggiCredenziali()
     if (is_file($percorso)) {   // il .env è facoltativo e ha la precedenza su CONFIG
         $env = array_merge($env, leggiEnv($percorso));
     }
+    // Le variabili d'ambiente (impostazioni dell'app su Umbrel) hanno la precedenza su .env e CONFIG.
+    foreach (['USERNAME' => 'BADGEBOX_USERNAME', 'PASSWORD' => 'BADGEBOX_PASSWORD'] as $chiave => $nomeVariabile) {
+        $valore = getenv($nomeVariabile);
+        if ($valore !== false && $valore !== '') {
+            $env[$chiave] = $valore;
+        }
+    }
     foreach (['USERNAME', 'PASSWORD'] as $variabile) {
         if (!isset($env[$variabile]) || $env[$variabile] === '') {
-            throw new Errore("credenziali mancanti: compila $variabile nel file .env dell'app (cartella data), oppure in CONFIG all'inizio di presenze.php.");
+            throw new Errore("credenziali mancanti: imposta BADGEBOX_$variabile nelle variabili d'ambiente dell'app (o $variabile in .env / CONFIG).");
         }
     }
     return $env;
