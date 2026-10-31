@@ -2,7 +2,7 @@ manifestVersion: 1
 id: gianmaria-adecco
 category: automation
 name: Adecco
-version: "1.4.0"
+version: "1.4.1"
 tagline: Registro presenze e timbrature su Adecco BadgeBox
 icon: https://raw.githubusercontent.com/GianmariaPrevitera/Umbrel_Store/master/gianmaria-adecco/icon.svg
 description: >-
@@ -24,6 +24,6 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 releaseNotes: >-
-  Pagina rinnovata con lo stile di Tabler; conferme, form di timbratura e credenziali ora usano SweetAlert2, con notifiche al posto dei messaggi fissi.
+  Notifiche, conferme e form di timbratura/credenziali con SweetAlert2; pulsanti azione più coerenti con Tabler. Rimossi la modalità demo e i tasti per cambiare anno.
 submitter: Gianmaria
 submission: https://github.com/GianmariaPrevitera/Umbrel_Store

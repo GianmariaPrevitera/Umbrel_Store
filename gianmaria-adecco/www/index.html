@@ -2,67 +2,337 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Registro presenze</title>
 
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 
-  <!-- Tabler -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.34.0/dist/tabler-icons.min.css">
+  <link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css">
 
-  <!-- SweetAlert2 -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.min.css">
+  <link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.34.0/dist/tabler-icons.min.css">
+
+  <link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.min.css">
 
   <style>
-    /* Solo il minimo che Tabler non offre: griglia delle timbrature e larghezze delle colonne. */
-    .table-attendance .day-cell { width: 10rem; white-space: nowrap; }
-    .table-attendance .punches-cell { min-width: 24rem; }
-    .table-attendance .hours-cell { width: 8.5rem; white-space: nowrap; text-align: center; }
-    .table-attendance .actions-cell { width: 6rem; white-space: nowrap; text-align: center; }
-    .table-attendance .hours-cell,
-    .punch { font-variant-numeric: tabular-nums; }
+    body {
+      background: #f5f7fb;
+      color: #182433;
+      font-size: 14px;
+    }
+
+    .navbar-brand {
+      font-size: 21px;
+      font-weight: 700;
+    }
+
+    .page-wrapper {
+      min-height: 100vh;
+    }
+
+    .calendar-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .month-navigation {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .month-title {
+      min-width: 115px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    /* Riepilogo: cinque box */
+    .summary-card {
+      height: 100%;
+    }
+
+    .summary-card .card-body {
+      padding: 16px 18px;
+    }
+
+    .summary-label {
+      color: #667382;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .summary-value {
+      margin-top: 7px;
+      font-size: clamp(19px, 2vw, 25px);
+      font-weight: 700;
+      line-height: 1.3;
+      white-space: nowrap;
+    }
+
+
+    .summary-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .attendance-table {
+      margin-bottom: 0;
+    }
+
+    .attendance-table thead th {
+      padding: 15px 18px;
+      background: #fbfcfd;
+      color: #667382;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .6px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .attendance-table tbody td {
+      padding: 20px 18px;
+      vertical-align: middle;
+      border-color: #e9edf2;
+    }
+
+    .day-cell {
+      width: 185px;
+      min-width: 160px;
+      color: #354052;
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .punches-cell {
+      min-width: 400px;
+      width: auto;
+    }
 
     .punch-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
-      gap: .5rem 1.5rem;
-      max-width: 42rem;
+      grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr);
+      column-gap: 24px;
+      row-gap: 12px;
+      max-width: 680px;
     }
 
     .punch {
       display: flex;
       align-items: center;
-      gap: .5rem;
+      gap: 10px;
+      min-height: 18px;
+      font-size: 14px;
+      color: #354052;
       white-space: nowrap;
     }
 
-    .punch .status-dot { margin: 0; }
-
-    /* SweetAlert2 con lo stile di Tabler */
-    .swal2-popup {
-      border-radius: var(--tblr-border-radius-lg, 8px);
-      font-size: var(--tblr-body-font-size, .875rem);
+    .punch-dot {
+      width: 10px;
+      height: 10px;
+      flex: 0 0 10px;
+      border-radius: 50%;
     }
 
-    .swal2-title { font-size: 1.25rem; font-weight: 600; }
+    .dot-green { background: #2fb344; }
+    .dot-red { background: #d63939; }
+    .dot-yellow { background: #e6a700; }
+    .dot-blue   { background: #206bc4; }
+    .dot-purple { background: #ae3ec9; }
+
+    .punch-dot.dot-blue {
+      margin-left: -14px;
+      margin-right: 6px;
+      position: relative;
+      outline: 2px solid #fff;
+    }
+
+    .day-notes {
+      margin-top: 15px;
+      padding-top: 10px;
+      color: #667382;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .day-tags {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 5px;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1.6;
+    }
+
+    .tag-red {
+      background: #fbe9e9;
+      color: #a83232;
+    }
+
+    .tag-yellow {
+      background: #fff0c2;
+      color: #946200;
+    }
+
+    .tag-blue {
+      background: #e5efff;
+      color: #205bb2;
+    }
+
+    .tag-green {
+      background: #dff7e5;
+      color: #20763a;
+    }
+
+    .tag-purple {
+      background: #f5e6fa;
+      color: #7a2b94;
+    }
+
+    .hours-cell {
+      width: 135px;
+      min-width: 120px;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .hours-total {
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 1.8;
+      color: #354052;
+    }
+
+    .hours-overtime {
+      color: #206bc4;
+    }
+
+    .empty-day {
+      color: #b8c0cc;
+    }
+
+
+.year-value {
+  min-width: 58px;
+  margin-right: 4px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 24px;
+  font-variant-numeric: tabular-nums;
+}
+
+
+
+    @media (max-width: 767px) {
+      .page-body {
+        padding: 15px 8px;
+      }
+
+      .calendar-toolbar {
+        gap: 12px;
+      }
+
+      .month-navigation {
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .month-title {
+        min-width: 100px;
+        font-size: 18px;
+      }
+
+      .summary-card .card-body {
+        padding: 13px;
+      }
+
+      .summary-value {
+        font-size: 21px;
+      }
+
+
+      .attendance-table tbody td {
+        padding: 15px 12px;
+      }
+
+      .punches-cell {
+        min-width: 390px;
+      }
+
+      .punch-grid {
+        grid-template-columns: 1fr 1fr;
+        column-gap: 12px;
+      }
+
+      .day-cell {
+        min-width: 140px;
+        width: 140px;
+      }
+
+      .hours-cell {
+        min-width: 100px;
+      }
+    }
+
+    /* Riga della settimana corrente con il bottone del timesheet */
+    .week-row td {
+      padding: 12px 18px;
+      background: #f1f5fb;
+      border-color: #e9edf2;
+    }
+
+    .week-row-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      color: #354052;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    /* Form di timbratura */
+    .actions-cell { width: 96px; min-width: 96px; text-align: center; white-space: nowrap; }
+
+    /* SweetAlert2: font e pulsanti coerenti con la pagina */
+    .swal2-popup { font-size: 14px; }
+    .swal2-title { font-size: 20px; font-weight: 600; }
     .swal2-html-container { overflow: visible; }
     .swal2-validation-message { justify-content: flex-start; }
-    .swal2-actions { gap: .5rem; }
+    .swal2-actions { gap: 8px; }
     .swal2-actions .btn { margin: 0; }
   </style>
 </head>
 
-<body class="antialiased">
+<body>
 <div class="page">
 
   <header class="navbar navbar-expand-md d-print-none">
     <div class="container-xl">
-      <h1 class="navbar-brand navbar-brand-autodark mb-0 pe-0 pe-md-3">
-        <i class="ti ti-fingerprint me-2"></i>Timbratura
-      </h1>
+      <h1 class="navbar-brand mb-0">Timbratura</h1>
 
-      <div class="navbar-nav flex-row ms-auto align-items-center">
+      <div class="navbar-nav flex-row ms-auto">
         <div class="nav-item me-2">
           <button type="button" class="btn btn-icon btn-ghost-secondary" id="configBtn"
             title="Credenziali BadgeBox" aria-label="Credenziali BadgeBox">
@@ -70,9 +340,9 @@
           </button>
         </div>
         <div class="nav-item">
-          <span class="nav-link d-flex lh-1 text-reset p-0">
+          <span class="nav-link d-flex align-items-center gap-2">
             <span class="avatar avatar-sm bg-blue-lt" id="userInitials"></span>
-            <span class="ps-2 d-none d-sm-block" id="userName"></span>
+            <span id="userName"></span>
           </span>
         </div>
       </div>
@@ -80,130 +350,106 @@
   </header>
 
   <div class="page-wrapper">
-
-    <!-- Titolo e navigazione mese / anno -->
-    <div class="page-header d-print-none">
-      <div class="container-xl">
-        <div class="row g-2 align-items-center">
-          <div class="col">
-            <div class="page-pretitle">Registro presenze</div>
-            <h2 class="page-title">
-              <span id="monthTitle">Ottobre</span>
-              <span class="text-secondary fw-normal ms-1" id="yearValue">2026</span>
-            </h2>
-          </div>
-
-          <div class="col-auto ms-auto">
-            <div class="btn-list">
-              <div class="btn-group" role="group" aria-label="Navigazione">
-                <button type="button" class="btn btn-icon" id="prevYear" title="Anno precedente" aria-label="Anno precedente">
-                  <i class="ti ti-chevrons-left"></i>
-                </button>
-                <button type="button" class="btn btn-icon" id="prevMonth" title="Mese precedente" aria-label="Mese precedente">
-                  <i class="ti ti-chevron-left"></i>
-                </button>
-                <button type="button" class="btn btn-icon" id="nextMonth" title="Mese successivo" aria-label="Mese successivo">
-                  <i class="ti ti-chevron-right"></i>
-                </button>
-                <button type="button" class="btn btn-icon" id="nextYear" title="Anno successivo" aria-label="Anno successivo">
-                  <i class="ti ti-chevrons-right"></i>
-                </button>
-              </div>
-
-              <button type="button" class="btn btn-outline-primary" id="todayBtn">
-                <i class="ti ti-calendar-event me-1"></i>Vai a oggi
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <div class="page-body">
       <div class="container-xl">
+
+        <!-- Navigazione mese e anno -->
+        <div class="calendar-toolbar">
+          <div class="month-navigation">
+
+            <button class="btn btn-icon btn-ghost-secondary"
+              id="prevMonth"
+              aria-label="Mese precedente">
+              <i class="ti ti-chevron-left"></i>
+            </button>
+
+            <span class="month-title" id="monthTitle">Ottobre</span>
+
+
+
+            <span id="yearValue" class="year-value">2026</span>
+
+            <button class="btn btn-icon btn-ghost-secondary"
+              id="nextMonth"
+              aria-label="Mese successivo">
+              <i class="ti ti-chevron-right"></i>
+            </button>
+
+
+          </div>
+
+          <button class="btn btn-outline-secondary" id="todayBtn">
+            <i class="ti ti-calendar me-1"></i>
+            Vai a oggi
+          </button>
+        </div>
 
         <!-- Errori di lettura dati -->
         <div id="errorBox"></div>
 
-        <!-- Riepilogo del mese -->
-        <div class="row row-deck row-cards mb-3">
+        <!-- Cinque box riepilogativi -->
+        <div class="row row-cards mb-3">
 
+          <!-- Ore lavorate -->
           <div class="col-6 col-md-4 col-xl">
-            <div class="card card-sm">
+            <div class="card summary-card">
               <div class="card-body">
-                <div class="row align-items-center">
-                  <div class="col-auto">
-                    <span class="bg-green text-white avatar"><i class="ti ti-clock"></i></span>
-                  </div>
-                  <div class="col">
-                    <div class="fw-semibold text-nowrap" id="workedHours">0h 00m</div>
-                    <div class="text-secondary">Ore lavorate</div>
-                  </div>
+                <div class="summary-header">
+                  <div class="summary-label">Ore lavorate</div>
+                </div>
+                <div class="summary-value" id="workedHours">0h 00m</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ore assenza -->
+          <div class="col-6 col-md-4 col-xl">
+            <div class="card summary-card">
+              <div class="card-body">
+                <div class="summary-header">
+                  <div class="summary-label">Ore assenza</div>
+                </div>
+                <div class="summary-value text-danger" id="absenceHours">
+                  0h 00m
                 </div>
               </div>
             </div>
           </div>
 
+          <!-- Ore straordinario -->
           <div class="col-6 col-md-4 col-xl">
-            <div class="card card-sm">
+            <div class="card summary-card">
               <div class="card-body">
-                <div class="row align-items-center">
-                  <div class="col-auto">
-                    <span class="bg-red text-white avatar"><i class="ti ti-beach"></i></span>
-                  </div>
-                  <div class="col">
-                    <div class="fw-semibold text-nowrap" id="absenceHours">0h 00m</div>
-                    <div class="text-secondary">Ore assenza</div>
-                  </div>
+                <div class="summary-header">
+                  <div class="summary-label">Ore straordinario</div>
+                </div>
+                <div class="summary-value text-primary" id="overtimeHours">
+                  0h 00m
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="col-6 col-md-4 col-xl">
-            <div class="card card-sm">
-              <div class="card-body">
-                <div class="row align-items-center">
-                  <div class="col-auto">
-                    <span class="bg-blue text-white avatar"><i class="ti ti-hourglass"></i></span>
-                  </div>
-                  <div class="col">
-                    <div class="fw-semibold text-nowrap" id="overtimeHours">0h 00m</div>
-                    <div class="text-secondary">Ore straordinario</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
+          <!-- Giorni trasferta -->
           <div class="col-6 col-md-6 col-xl">
-            <div class="card card-sm">
+            <div class="card summary-card">
               <div class="card-body">
-                <div class="row align-items-center">
-                  <div class="col-auto">
-                    <span class="bg-yellow text-white avatar"><i class="ti ti-plane"></i></span>
-                  </div>
-                  <div class="col">
-                    <div class="fw-semibold text-nowrap" id="travelDays">0</div>
-                    <div class="text-secondary">Giorni trasferta</div>
-                  </div>
+                <div class="summary-header">
+                  <div class="summary-label">Giorni trasferta</div>
                 </div>
+                <div class="summary-value text-warning" id="travelDays">0</div>
               </div>
             </div>
           </div>
 
+          <!-- Totale economico, per ora fisso -->
           <div class="col-12 col-md-6 col-xl">
-            <div class="card card-sm">
+            <div class="card summary-card">
               <div class="card-body">
-                <div class="row align-items-center">
-                  <div class="col-auto">
-                    <span class="bg-purple text-white avatar"><i class="ti ti-currency-euro"></i></span>
-                  </div>
-                  <div class="col">
-                    <div class="fw-semibold text-nowrap" id="totalAmount">0 €</div>
-                    <div class="text-secondary">Totale</div>
-                  </div>
+                <div class="summary-header">
+                  <div class="summary-label">Tot</div>
                 </div>
+                <div class="summary-value" id="totalAmount">0 €</div>
               </div>
             </div>
           </div>
@@ -212,22 +458,21 @@
 
         <!-- Tabella presenze -->
         <div class="card">
-          <div class="card-header">
-            <h3 class="card-title">Timbrature del mese</h3>
-          </div>
           <div class="table-responsive">
-            <table class="table card-table table-vcenter table-attendance">
+            <table class="table table-vcenter attendance-table">
               <thead>
                 <tr>
                   <th>Giorno</th>
                   <th>Timbrature</th>
                   <th class="text-center">Ore</th>
-                  <th class="text-center d-print-none">Azioni</th>
+                  <th class="text-center">Azioni</th>
                 </tr>
               </thead>
               <tbody id="attendanceBody"></tbody>
             </table>
           </div>
+
+
         </div>
 
       </div>
@@ -256,75 +501,11 @@
   const HOURLY_RATE = 10.02397032;
   const OVERTIME_RATE = 4.3625;
 
-  /*
-   * Modalità demo: se la pagina viene aperta come file (doppio clic) oppure con
-   * ?demo nell'indirizzo, usa i dati di esempio qui sotto invece del server.
-   * Con "python3 presenze.py" o con presenze.php i dati arrivano da BadgeBox.
-   */
-  const DEMO_MODE =
-    location.protocol === "file:" ||
-    new URLSearchParams(location.search).has("demo");
-
-  const DEMO_USER = { name: "Mario", surname: "Rossi" };
-
-  /*
-   * Dati di esempio.
-   * Le chiavi seguono il formato anno-mese-giorno.
-   * Il server (presenze.py) restituisce lo stesso formato.
-   */
-  const DEMO_ATTENDANCE = {
-    "2026-10-1": {
-      punches: [
-        { time: "09:00 - 13:00", type: "-1" },
-        { time: "14:00 - 18:00", type: "-1" }
-      ]
-    },
-
-    "2026-10-2": {
-      punches: [
-        { time: "09:00 - 13:00", type: "absence" },
-        { time: "14:00 - 18:00", type: "252" }
-      ],
-      note: "Assenza con trasferta"
-    },
-
-    "2026-10-5": {
-      punches: [
-        { time: "09:00 - 13:00", type: "absence" },
-        { time: "14:00 - 18:00", type: "-1" }
-      ],
-      note: "Giornata con mezza giornata di assenza"
-    },
-
-    "2026-10-6": {
-      punches: [
-        { time: "09:00 - 13:00", type: "252" },
-        { time: "14:00 - 18:00", type: "252" }
-      ],
-      note: "Trasferta a Venezia per il festival del cinema"
-    },
-
-    "2026-10-7": {
-      punches: [
-        { time: "09:00 - 13:00", type: "252" },
-        { time: "14:00 - 19:00", type: "252" }
-      ],
-      note: "Trasferta con straordinario"
-    },
-
-    "2026-10-8": {
-      punches: [
-        { time: "09:00 - 13:00", type: "251" },
-        { time: "14:00 - 18:00", type: "251" }
-      ]
-    }
-  };
-
   // Dati del mese visualizzato (in modalità normale arrivano dal server).
   let attendance = {};
 
-  let currentYear = DEMO_MODE ? 2026 : new Date().getFullYear();
-  let currentMonth = DEMO_MODE ? 9 : new Date().getMonth();
+  let currentYear = new Date().getFullYear();
+  let currentMonth = new Date().getMonth();
 
   const el = id => document.getElementById(id);
   const body = el("attendanceBody");
@@ -340,11 +521,10 @@
 
   const swalClasses = (confirm = "btn btn-primary") => ({
     confirmButton: confirm,
-    cancelButton: "btn btn-link link-secondary",
-    denyButton: "btn btn-outline-secondary"
+    cancelButton: "btn btn-link link-secondary"
   });
 
-  // Dialoghi e conferme: pulsanti Tabler, "Annulla" a sinistra, conferma a destra.
+  // Form e conferme.
   const Dialog = Swal.mixin({
     buttonsStyling: false,
     reverseButtons: true,
@@ -352,7 +532,7 @@
     customClass: swalClasses()
   });
 
-  // Notifica non bloccante in alto a destra.
+  // Notifiche non bloccanti in alto a destra.
   const Toast = Swal.mixin({
     toast: true,
     position: "top-end",
@@ -361,13 +541,12 @@
     timerProgressBar: true
   });
 
-  const notify = (message, icon = "success") => Toast.fire({ icon, title: message });
+  const notify = message => Toast.fire({ icon: "success", title: message });
 
   const errorText = error => (error && error.message) || String(error);
 
-  function showErrorDialog(title, message) {
-    return Dialog.fire({ icon: "error", title, text: message, confirmButtonText: "Chiudi" });
-  }
+  const notifyError = (prefix, error) =>
+    Toast.fire({ icon: "error", title: `${prefix}: ${errorText(error)}`, timer: 7000 });
 
   /* ------------------------------------------------------------------------
    * Utilità
@@ -383,7 +562,7 @@
   /*
    * Tipi di timbratura. Il server manda `type`: l'id_track_voice di BadgeBox
    * ("-1" regolare, "251" smart working, "252" trasferta) oppure "absence" per le assenze.
-   * Un tipo sconosciuto è trattato come regolare. `color` è un colore di Tabler.
+   * Un tipo sconosciuto è trattato come regolare.
    */
   const REGULAR_TYPE = { label: "Regolare", color: "green" };
 
@@ -472,7 +651,7 @@
     }
 
     return [...types].map(type =>
-      `<span class="badge bg-${type.color}-lt">${escapeHtml(type.label)}</span>`
+      `<span class="tag tag-${type.color}">${escapeHtml(type.label)}</span>`
     ).join("");
   }
 
@@ -488,12 +667,12 @@
     el("yearValue").textContent = currentYear;
   }
 
-  const EMPTY_CELL = '<span class="text-secondary">—</span>';
+  const EMPTY_CELL = '<span class="empty-day">—</span>';
 
   function dayRow(date, punchesHtml, hoursHtml, actionsHtml) {
     return `
       <tr>
-        <td class="day-cell fw-semibold">${dayNames[date.getDay()]} ${pad2(date.getDate())}</td>
+        <td class="day-cell">${dayNames[date.getDay()]} ${pad2(date.getDate())}</td>
         <td class="punches-cell">${punchesHtml}</td>
         <td class="hours-cell">${hoursHtml}</td>
         ${actionsHtml}
@@ -506,18 +685,22 @@
 
       return `
         <div class="punch">
-          <span class="status-dot status-${punchType(punch).color}"></span>
+          <span class="punch-dot dot-${punchType(punch).color}"></span>
+          ${showOvertimeDot ? '<span class="punch-dot dot-blue" title="Straordinario"></span>' : ""}
           <span>${escapeHtml(punch.time || "")}</span>
-          ${showOvertimeDot ? '<span class="status-dot status-blue" title="Straordinario"></span>' : ""}
         </div>`;
     }).join("");
   }
 
   function hoursHtml(day) {
     return `
-      <div>${formatHours(day.ordinary)}</div>
-      ${day.overtime > 0 ? `<div class="text-blue">+ ${formatHours(day.overtime)}</div>` : ""}
-      ${day.absence > 0 ? `<div class="text-red">${formatHours(day.absence)}</div>` : ""}`;
+      <div class="hours-total">${formatHours(day.ordinary)}</div>
+      ${day.overtime > 0
+        ? `<div class="hours-total hours-overtime">+ ${formatHours(day.overtime)}</div>`
+        : ""}
+      ${day.absence > 0
+        ? `<div class="hours-total" style="color: #d63939;">${formatHours(day.absence)}</div>`
+        : ""}`;
   }
 
   function renderCalendar() {
@@ -552,8 +735,8 @@
       totals.travelDays += day.isTravelDay ? 1 : 0;
 
       const notes = record.note || tags ? `
-        <div class="mt-2 text-secondary small">
-          ${tags ? `<div class="d-flex flex-wrap gap-1 mb-1">${tags}</div>` : ""}
+        <div class="day-notes">
+          ${tags ? `<div class="day-tags">${tags}</div>` : ""}
           ${record.note ? `<div>${escapeHtml(record.note)}</div>` : ""}
         </div>` : "";
 
@@ -594,7 +777,7 @@
   }
 
   /* ------------------------------------------------------------------------
-   * Lettura dei dati dal server (presenze.php)
+   * Lettura dei dati dal server (presenze.py)
    * ---------------------------------------------------------------------- */
 
   let loadToken = 0;
@@ -635,14 +818,10 @@
       </tr>`;
   }
 
-  // Errore di lettura: avviso di Tabler in cima alla pagina.
   function showError(message, prefix = "Impossibile leggere i dati") {
     el("errorBox").innerHTML = `
       <div class="alert alert-danger" role="alert">
-        <div class="d-flex">
-          <div><i class="ti ti-alert-circle alert-icon"></i></div>
-          <div>${escapeHtml(prefix)}: ${escapeHtml(message)}</div>
-        </div>
+        ${escapeHtml(prefix)}: ${escapeHtml(message)}
       </div>`;
   }
 
@@ -652,13 +831,6 @@
 
     updateToolbar();
     el("errorBox").innerHTML = "";
-
-    if (DEMO_MODE) {
-      attendance = DEMO_ATTENDANCE;
-      setUser(DEMO_USER);
-      renderCalendar();
-      return;
-    }
 
     showMessageRow('<span class="spinner-border spinner-border-sm me-2"></span>Caricamento…');
 
@@ -691,11 +863,11 @@
       }
 
       showMessageRow("Dati non disponibili");
-      showError(errorText(error));
+      showError(error.message || String(error));
     }
   }
 
-  // Navigazione mensile e annuale.
+  // Navigazione mensile.
   function goToMonth(delta) {
     const target = new Date(currentYear, currentMonth + delta, 1);
 
@@ -704,15 +876,8 @@
     loadMonth();
   }
 
-  function goToYear(delta) {
-    currentYear += delta;
-    loadMonth();
-  }
-
   el("prevMonth").addEventListener("click", () => goToMonth(-1));
   el("nextMonth").addEventListener("click", () => goToMonth(1));
-  el("prevYear").addEventListener("click", () => goToYear(-1));
-  el("nextYear").addEventListener("click", () => goToYear(1));
 
   el("todayBtn").addEventListener("click", () => {
     const today = new Date();
@@ -744,19 +909,13 @@
 
   const shortDate = iso => toItalianDate(iso).slice(0, 5);
 
-  // Riga con il bottone che invia il timesheet della settimana corrente. Non in demo.
+  // Riga con il bottone che invia il timesheet della settimana corrente (lunedì-domenica).
   function weekRow(week) {
-    if (DEMO_MODE) {
-      return "";
-    }
-
     return `
-      <tr class="d-print-none">
-        <td colspan="4" class="bg-blue-lt">
-          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-            <span class="fw-semibold">
-              <i class="ti ti-calendar-week me-1"></i>Timesheet: ${shortDate(week.tsStart)} – ${shortDate(week.tsEnd)}
-            </span>
+      <tr class="week-row d-print-none">
+        <td colspan="4">
+          <div class="week-row-inner">
+            <span><i class="ti ti-calendar-week me-1"></i>Timesheet: ${shortDate(week.tsStart)} – ${shortDate(week.tsEnd)}</span>
             <button type="button" class="btn btn-sm btn-primary act-timesheet"
               data-from="${week.tsStart}" data-to="${week.tsEnd}">
               <i class="ti ti-send me-1"></i>Invia timesheet
@@ -783,14 +942,13 @@
     }
 
     button.disabled = true;
-    el("errorBox").innerHTML = "";
 
     try {
       const result = await postJson(apiUrl("timesheet"), {});
 
       notify(result.messaggio || "Timesheet inviato.");
     } catch (error) {
-      showErrorDialog("Invio timesheet non riuscito", errorText(error));
+      notifyError("Invio timesheet non riuscito", error);
     } finally {
       button.disabled = false;
     }
@@ -799,13 +957,13 @@
   /*
    * Cella delle azioni, solo per i giorni della settimana corrente:
    * + (timbra) fino a oggi compreso, non si può anticipare; x (elimina i turni) se il giorno ne ha.
-   * Fuori dalla settimana corrente, o in modalità demo, resta vuota.
+   * Fuori dalla settimana corrente resta vuota.
    */
   function actionCell(date, hasShifts, week) {
     const iso = toIso(date);
     const canAdd = iso <= week.today;
 
-    if (DEMO_MODE || iso < week.start || iso > week.end || (!canAdd && !hasShifts)) {
+    if (iso < week.start || iso > week.end || (!canAdd && !hasShifts)) {
       return '<td class="actions-cell"></td>';
     }
 
@@ -813,12 +971,12 @@
       <td class="actions-cell d-print-none">
         <div class="btn-list flex-nowrap justify-content-center">
           ${canAdd ? `
-          <button type="button" class="btn btn-icon btn-sm btn-outline-primary act-add"
+          <button type="button" class="btn btn-icon btn-sm btn-primary act-add"
             data-date="${iso}" title="Timbra questo giorno" aria-label="Timbra">
             <i class="ti ti-plus"></i>
           </button>` : ""}
           ${hasShifts ? `
-          <button type="button" class="btn btn-icon btn-sm btn-outline-danger act-del"
+          <button type="button" class="btn btn-icon btn-sm btn-danger act-del"
             data-date="${iso}" title="Elimina i turni di questo giorno" aria-label="Elimina">
             <i class="ti ti-trash"></i>
           </button>` : ""}
@@ -950,7 +1108,6 @@
     }
 
     button.disabled = true;
-    el("errorBox").innerHTML = "";
 
     try {
       await postJson(apiUrl("elimina-giorno"), { data: iso });
@@ -958,7 +1115,7 @@
       loadMonth();
     } catch (error) {
       button.disabled = false;
-      showErrorDialog("Eliminazione non riuscita", errorText(error));
+      notifyError("Eliminazione non riuscita", error);
     }
   }
 
@@ -1053,7 +1210,6 @@
   }
 
   el("configBtn").addEventListener("click", openConfigDialog);
-  el("configBtn").hidden = DEMO_MODE;
 
   // Primo caricamento.
   loadMonth();
