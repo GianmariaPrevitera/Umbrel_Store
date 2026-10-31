@@ -53,24 +53,88 @@ textarea::placeholder{color:var(--muted)}
 .banner.on{display:block}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:9px 16px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s}
 .toast.on{opacity:1}
+.add-toggle{
+  width:32px;
+  height:32px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:var(--card);
+  color:var(--text);
+  font-size:23px;
+  font-weight:400;
+  line-height:1;
+  cursor:pointer;
+  transition:transform .2s, background .15s, color .15s;
+  flex-shrink:0;
+}
+
+.add-toggle:hover{
+  background:var(--bg);
+}
+
+.add-toggle.open{
+  transform:rotate(90deg);
+  color:var(--err);
+}
+
+/* Dropdown aggiunta download */
+.card.add{
+  display:grid;
+  grid-template-rows:0fr;
+  padding:0;
+  margin-bottom:0;
+  opacity:0;
+  overflow:hidden;
+  border-color:transparent;
+  transition:
+    grid-template-rows .25s ease,
+    opacity .2s ease,
+    padding .25s ease,
+    margin .25s ease;
+}
+
+.card.add.open{
+  grid-template-rows:1fr;
+  padding:12px;
+  margin-bottom:18px;
+  opacity:1;
+  border-color:var(--line);
+}
+
+.card.add > *{
+  min-height:0;
+}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <div class="brand">
-      <svg viewBox="0 0 256 256" aria-hidden="true"><rect width="256" height="256" rx="56" fill="#066FD1"/><g fill="none" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"><path d="M128 70V160" stroke="#fff"/><path d="M92 124L128 160L164 124" stroke="#fff"/><path d="M84 196H172" stroke="#F59F00"/></g></svg>
+      <svg viewBox="0 0 256 256" aria-hidden="true">
+        <rect width="256" height="256" rx="56" fill="#066FD1"/>
+        <g fill="none" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M128 70V160" stroke="#fff"/>
+          <path d="M92 124L128 160L164 124" stroke="#fff"/>
+          <path d="M84 196H172" stroke="#F59F00"/>
+        </g>
+      </svg>
       aria2
     </div>
+
     <div class="stats">
       <span>↓ <b id="sDown">0 B/s</b></span>
       <span>↑ <b id="sUp">0 B/s</b></span>
+
+      <button id="toggleAdd" class="add-toggle" title="Aggiungi download" aria-label="Aggiungi download" aria-expanded="false">+</button>
     </div>
   </header>
 
   <div id="banner" class="banner">Impossibile contattare aria2. Riprovo…</div>
 
-  <div class="card add">
+  <div class="card add" id="addPanel">
     <textarea id="urls" rows="1" placeholder="Incolla link o magnet, uno per riga"></textarea>
     <div class="add-row">
       <label class="btn" for="torrent">Carica .torrent</label>
@@ -245,6 +309,23 @@ textarea::placeholder{color:var(--muted)}
   refresh();
   setInterval(refresh, 1500);
 })();
+var toggleAdd = $('toggleAdd');
+var addPanel = $('addPanel');
+
+toggleAdd.addEventListener('click', function(){
+  var isOpen = addPanel.classList.toggle('open');
+
+  toggleAdd.classList.toggle('open', isOpen);
+  toggleAdd.textContent = isOpen ? '×' : '+';
+
+  toggleAdd.setAttribute('aria-expanded', String(isOpen));
+  toggleAdd.setAttribute(
+    'aria-label',
+    isOpen ? 'Chiudi aggiunta download' : 'Aggiungi download'
+  );
+
+  toggleAdd.title = isOpen ? 'Chiudi' : 'Aggiungi download';
+});
 </script>
 </body>
 </html>
