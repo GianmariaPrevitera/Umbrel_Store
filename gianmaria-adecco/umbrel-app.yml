@@ -2,7 +2,7 @@ manifestVersion: 1
 id: gianmaria-adecco
 category: automation
 name: Adecco
-version: "1.2.0"
+version: "1.2.1"
 tagline: Registro presenze e timbrature su Adecco BadgeBox
 icon: https://raw.githubusercontent.com/GianmariaPrevitera/Umbrel_Store/master/gianmaria-adecco/icon.svg
 description: >-
@@ -24,6 +24,6 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 releaseNotes: >-
-  Immagine più leggera (php cli alpine con server integrato) al posto di php apache.
+  Corretto il percorso dell icona (branch master).
 submitter: Gianmaria
 submission: https://github.com/GianmariaPrevitera/Umbrel_Store
