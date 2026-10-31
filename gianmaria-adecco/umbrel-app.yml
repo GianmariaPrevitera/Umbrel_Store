@@ -1,30 +1,28 @@
 manifestVersion: 1
 id: gianmaria-adecco
-category: files
+category: automation
 name: Adecco
-icon: https://raw.githubusercontent.com/GianmariaPrevitera/Umbrel_Store/master/gianmaria-adecco/icon.svg
-version: "1.1.0"
+icon: https://raw.githubusercontent.com/GianmariaPrevitera/Umbrel_Store/main/gianmaria-adecco/icon.svg
+version: "1.0.2"
 tagline: Registro presenze e timbrature su Adecco BadgeBox
 description: >-
-  aria2 è un download manager leggero e velocissimo, con interfaccia web Aria2 WebUI.
+  Registro mensile delle presenze letto da Adecco BadgeBox, con riepilogo di ore lavorate,
+  straordinari, assenze e trasferte.
 
 
-  Supporta HTTP, HTTPS, FTP, SFTP, BitTorrent, magnet link e Metalink, con download multi-connessione e possibilità di scegliere quali file scaricare da un torrent.
+  Dalla pagina puoi timbrare o eliminare i turni della settimana corrente e inviare il
+  timesheet (lunedì-domenica, tagliato a fine mese).
 
 
-  I file vengono salvati nella cartella Downloads di umbrelOS.
-
-
-  Al primo accesso apri le impostazioni di Aria2 WebUI (Connection Settings) e inserisci come Secret Token la password mostrata da umbrelOS nella pagina dell'app. Al primo avvio vengono scaricati aria2 e l'interfaccia, quindi serve connessione a internet.
-
-releaseNotes: >-
-  Credenziali BadgeBox configurabili dalle impostazioni dell'app (variabili d'ambiente BADGEBOX_USERNAME e BADGEBOX_PASSWORD).
-
+  Dopo l'installazione inserisci USERNAME e PASSWORD di BadgeBox nel file
+  ~/umbrel/app-data/gianmaria-adecco/data/.env
 developer: Gianmaria
 website: https://github.com/GianmariaPrevitera/Umbrel_Store
 dependencies: []
 repo: https://github.com/GianmariaPrevitera/Umbrel_Store
 support: https://github.com/GianmariaPrevitera/Umbrel_Store/issues
 port: 3871
+releaseNotes: >-
+  App rinominata in Adecco (id gianmaria-adecco).
 submitter: Gianmaria
 submission: https://github.com/GianmariaPrevitera/Umbrel_Store
