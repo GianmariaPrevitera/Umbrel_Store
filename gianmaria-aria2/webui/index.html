@@ -308,24 +308,25 @@ textarea::placeholder{color:var(--muted)}
 
   refresh();
   setInterval(refresh, 1500);
+  var toggleAdd = $('toggleAdd');
+  var addPanel = $('addPanel');
+
+  toggleAdd.addEventListener('click', function(){
+    var isOpen = addPanel.classList.toggle('open');
+
+    toggleAdd.classList.toggle('open', isOpen);
+    toggleAdd.textContent = isOpen ? '×' : '+';
+
+    toggleAdd.setAttribute('aria-expanded', String(isOpen));
+    toggleAdd.setAttribute(
+      'aria-label',
+      isOpen ? 'Chiudi aggiunta download' : 'Aggiungi download'
+    );
+
+    toggleAdd.title = isOpen ? 'Chiudi' : 'Aggiungi download';
+  });
+
 })();
-var toggleAdd = $('toggleAdd');
-var addPanel = $('addPanel');
-
-toggleAdd.addEventListener('click', function(){
-  var isOpen = addPanel.classList.toggle('open');
-
-  toggleAdd.classList.toggle('open', isOpen);
-  toggleAdd.textContent = isOpen ? '×' : '+';
-
-  toggleAdd.setAttribute('aria-expanded', String(isOpen));
-  toggleAdd.setAttribute(
-    'aria-label',
-    isOpen ? 'Chiudi aggiunta download' : 'Aggiungi download'
-  );
-
-  toggleAdd.title = isOpen ? 'Chiudi' : 'Aggiungi download';
-});
 </script>
 </body>
 </html>
