@@ -1,0 +1,20 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: gianmaria-adecco_web_1
+      APP_PORT: 80
+
+  web:
+    image: php:8.3-apache
+    restart: on-failure
+    environment:
+      TZ: Europe/Rome
+      # Credenziali BadgeBox: si modificano da umbrelOS, in
+      # Impostazioni dell'app > Avanzate > Variabili d'ambiente.
+      BADGEBOX_USERNAME: ""
+      BADGEBOX_PASSWORD: ""
+    volumes:
+      # Pagina e backend (index.html + presenze.php), in sola lettura.
+      - ${APP_DATA_DIR}/www:/var/www/html:ro
