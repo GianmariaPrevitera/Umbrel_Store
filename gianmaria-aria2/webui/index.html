@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>aria2</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Crect width='256' height='256' rx='56' fill='%23066FD1'/%3E%3Cg fill='none' stroke-width='20' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M128 60V150' stroke='%23fff'/%3E%3Cpath d='M92 114L128 150L164 114' stroke='%23fff'/%3E%3Cpath d='M84 196H172' stroke='%23F59F00'/%3E%3C/g%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#f6f7f9; --card:#fff; --text:#16181d; --muted:#6b7280; --line:#e5e7eb;
+  --primary:#066FD1; --accent:#F59F00; --ok:#2f9e44; --err:#d63939; --track:#e8eaee;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#0f1115; --card:#171a21; --text:#e8eaee; --muted:#8b93a1; --line:#262b35; --track:#262b35; }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding:28px 16px 64px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:18px;letter-spacing:-.01em}
+.brand svg{width:28px;height:28px}
+.stats{display:flex;gap:14px;color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+.stats b{color:var(--text);font-weight:600}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px}
+.add{padding:12px;margin-bottom:18px}
+textarea{width:100%;min-height:44px;max-height:160px;resize:vertical;border:0;outline:0;background:transparent;color:var(--text);font:inherit;padding:6px 6px}
+textarea::placeholder{color:var(--muted)}
+.add-row{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-top:6px}
+.btn{border:1px solid var(--line);background:transparent;color:var(--text);border-radius:9px;padding:7px 12px;font:inherit;font-size:14px;cursor:pointer;transition:background .15s,border-color .15s}
+.btn:hover{background:var(--bg)}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn.primary:hover{filter:brightness(1.08)}
+.tabs{display:flex;gap:4px;margin-bottom:12px}
+.tab{border:0;background:transparent;color:var(--muted);font:inherit;font-size:14px;padding:6px 12px;border-radius:9px;cursor:pointer}
+.tab.on{background:var(--card);color:var(--text);border:1px solid var(--line);padding:5px 11px}
+.tab span{margin-left:6px;font-size:12px;color:var(--muted)}
+.list{display:flex;flex-direction:column;gap:10px}
+.item{padding:14px 14px 12px}
+.top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.name{font-weight:500;word-break:break-word}
+.acts{display:flex;gap:4px;flex-shrink:0}
+.ic{border:0;background:transparent;color:var(--muted);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:15px;line-height:1}
+.ic:hover{background:var(--bg);color:var(--text)}
+.bar{height:5px;background:var(--track);border-radius:99px;overflow:hidden;margin:10px 0 8px}
+.bar i{display:block;height:100%;background:var(--primary);border-radius:99px;transition:width .4s}
+.bar.done i{background:var(--ok)}
+.bar.err i{background:var(--err)}
+.bar.pause i{background:var(--accent)}
+.meta{display:flex;flex-wrap:wrap;gap:4px 14px;color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+.empty{padding:36px 12px;text-align:center;color:var(--muted)}
+.banner{display:none;margin-bottom:14px;padding:10px 14px;border-radius:10px;background:rgba(214,57,57,.1);color:var(--err);font-size:14px}
+.banner.on{display:block}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:9px 16px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.on{opacity:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <svg viewBox="0 0 256 256" aria-hidden="true"><rect width="256" height="256" rx="56" fill="#066FD1"/><g fill="none" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"><path d="M128 60V150" stroke="#fff"/><path d="M92 114L128 150L164 114" stroke="#fff"/><path d="M84 196H172" stroke="#F59F00"/></g></svg>
+      aria2
+    </div>
+    <div class="stats">
+      <span>↓ <b id="sDown">0 B/s</b></span>
+      <span>↑ <b id="sUp">0 B/s</b></span>
+    </div>
+  </header>
+
+  <div id="banner" class="banner">Impossibile contattare aria2. Riprovo…</div>
+
+  <div class="card add">
+    <textarea id="urls" rows="1" placeholder="Incolla link o magnet, uno per riga"></textarea>
+    <div class="add-row">
+      <label class="btn" for="torrent">Carica .torrent</label>
+      <input id="torrent" type="file" accept=".torrent,application/x-bittorrent" multiple hidden>
+      <button id="add" class="btn primary">Aggiungi</button>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab on" data-tab="active">Attivi<span id="cActive">0</span></button>
+    <button class="tab" data-tab="waiting">In coda<span id="cWaiting">0</span></button>
+    <button class="tab" data-tab="stopped">Completati<span id="cStopped">0</span></button>
+  </div>
+
+  <div id="list" class="list"></div>
+</div>
+<div id="toast" class="toast"></div>
+
+<script src="config.js"></script>
+<script>
+(function(){
+  var SECRET = window.ARIA2_SECRET || '';
+  var TOKEN = 'token:' + SECRET;
+  var KEYS = ['gid','status','totalLength','completedLength','downloadSpeed','uploadSpeed','files','bittorrent','errorMessage'];
+  var tab = 'active';
+  var data = {active:[], waiting:[], stopped:[]};
+  var seq = 0;
+
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+  function fmtBytes(n){
+    n = Number(n)||0;
+    var u = ['B','KB','MB','GB','TB'], i = 0;
+    while(n >= 1024 && i < u.length-1){ n /= 1024; i++; }
+    return (i === 0 ? n.toFixed(0) : n.toFixed(n >= 100 ? 0 : 1)) + ' ' + u[i];
+  }
+  function fmtEta(sec){
+    if(!isFinite(sec) || sec <= 0) return '';
+    var h = Math.floor(sec/3600), m = Math.floor(sec%3600/60), s = Math.floor(sec%60);
+    return h ? h+'h '+m+'m' : m ? m+'m '+s+'s' : s+'s';
+  }
+  function nameOf(d){
+    if(d.bittorrent && d.bittorrent.info && d.bittorrent.info.name) return d.bittorrent.info.name;
+    var f = d.files && d.files[0];
+    if(f){
+      var p = f.path || (f.uris && f.uris[0] && f.uris[0].uri) || '';
+      var base = p.split('/').filter(Boolean).pop() || p;
+      try { base = decodeURIComponent(base); } catch(e){}
+      if(base) return base;
+    }
+    return d.gid;
+  }
+
+  function call(body){
+    return fetch('/jsonrpc', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)})
+      .then(function(r){ return r.json(); });
+  }
+  function rpc(method, params){
+    return call({jsonrpc:'2.0', id:String(++seq), method:method, params:[TOKEN].concat(params||[])})
+      .then(function(j){ if(j.error) throw new Error(j.error.message); return j.result; });
+  }
+
+  function toast(msg){
+    var t = $('toast'); t.textContent = msg; t.classList.add('on');
+    clearTimeout(toast.t); toast.t = setTimeout(function(){ t.classList.remove('on'); }, 2400);
+  }
+
+  function refresh(){
+    return call({jsonrpc:'2.0', id:'m', method:'system.multicall', params:[[
+      {methodName:'aria2.getGlobalStat', params:[TOKEN]},
+      {methodName:'aria2.tellActive', params:[TOKEN, KEYS]},
+      {methodName:'aria2.tellWaiting', params:[TOKEN, 0, 100, KEYS]},
+      {methodName:'aria2.tellStopped', params:[TOKEN, 0, 100, KEYS]}
+    ]]}).then(function(j){
+      if(j.error) throw new Error(j.error.message);
+      var r = j.result;
+      for(var i = 0; i < r.length; i++){ if(r[i] && r[i].code) throw new Error(r[i].message); }
+      var g = r[0][0];
+      $('sDown').textContent = fmtBytes(g.downloadSpeed) + '/s';
+      $('sUp').textContent = fmtBytes(g.uploadSpeed) + '/s';
+      data.active = r[1][0]; data.waiting = r[2][0]; data.stopped = r[3][0];
+      $('banner').classList.remove('on');
+      render();
+    }).catch(function(){ $('banner').classList.add('on'); });
+  }
+
+  function render(){
+    $('cActive').textContent = data.active.length;
+    $('cWaiting').textContent = data.waiting.length;
+    $('cStopped').textContent = data.stopped.length;
+    var items = data[tab];
+    var el = $('list');
+    if(!items.length){
+      el.innerHTML = '<div class="card empty">' + (tab === 'active' ? 'Nessun download attivo' : tab === 'waiting' ? 'Nessun download in coda' : 'Nessun download completato') + '</div>';
+      return;
+    }
+    el.innerHTML = items.map(function(d){
+      var total = Number(d.totalLength)||0, done = Number(d.completedLength)||0, speed = Number(d.downloadSpeed)||0;
+      var pct = total ? Math.min(100, done/total*100) : 0;
+      var cls = d.status === 'complete' ? 'done' : (d.status === 'error' || d.status === 'removed') ? 'err' : d.status === 'paused' ? 'pause' : '';
+      var meta = [];
+      if(d.status === 'active'){
+        meta.push(pct.toFixed(1) + '%');
+        meta.push(fmtBytes(done) + ' / ' + (total ? fmtBytes(total) : '?'));
+        meta.push('↓ ' + fmtBytes(speed) + '/s');
+        if(Number(d.uploadSpeed)) meta.push('↑ ' + fmtBytes(d.uploadSpeed) + '/s');
+        var eta = fmtEta(speed ? (total-done)/speed : 0); if(eta) meta.push(eta);
+      } else if(d.status === 'waiting'){ meta.push('In coda'); }
+      else if(d.status === 'paused'){ meta.push('In pausa'); meta.push(pct.toFixed(1) + '%'); }
+      else if(d.status === 'complete'){ meta.push('Completato'); if(total) meta.push(fmtBytes(total)); }
+      else if(d.status === 'error'){ meta.push('Errore' + (d.errorMessage ? ': ' + d.errorMessage : '')); }
+      else { meta.push('Rimosso'); }
+      var btns = '';
+      if(d.status === 'active' || d.status === 'waiting') btns += '<button class="ic" data-act="pause" data-gid="'+d.gid+'" title="Pausa">❚❚</button>';
+      if(d.status === 'paused') btns += '<button class="ic" data-act="resume" data-gid="'+d.gid+'" title="Riprendi">▶</button>';
+      btns += '<button class="ic" data-act="remove" data-status="'+d.status+'" data-gid="'+d.gid+'" title="Rimuovi">✕</button>';
+      return '<div class="card item"><div class="top"><div class="name">'+esc(nameOf(d))+'</div><div class="acts">'+btns+'</div></div>'
+        + '<div class="bar '+cls+'"><i style="width:'+(d.status === 'complete' ? 100 : pct)+'%"></i></div>'
+        + '<div class="meta">'+meta.map(function(m){ return '<span>'+esc(m)+'</span>'; }).join('')+'</div></div>';
+    }).join('');
+  }
+
+  $('tabs').addEventListener('click', function(e){
+    var b = e.target.closest('.tab'); if(!b) return;
+    tab = b.dataset.tab;
+    Array.prototype.forEach.call(document.querySelectorAll('.tab'), function(t){ t.classList.toggle('on', t === b); });
+    render();
+  });
+
+  $('list').addEventListener('click', function(e){
+    var b = e.target.closest('[data-act]'); if(!b) return;
+    var gid = b.dataset.gid, act = b.dataset.act, p;
+    if(act === 'pause') p = rpc('aria2.pause', [gid]);
+    else if(act === 'resume') p = rpc('aria2.unpause', [gid]);
+    else {
+      var st = b.dataset.status;
+      p = (st === 'complete' || st === 'error' || st === 'removed')
+        ? rpc('aria2.removeDownloadResult', [gid])
+        : rpc('aria2.remove', [gid]).then(function(){ return rpc('aria2.removeDownloadResult', [gid]).catch(function(){}); });
+    }
+    p.then(refresh).catch(function(err){ toast(err.message); });
+  });
+
+  $('add').addEventListener('click', function(){
+    var lines = $('urls').value.split('\n').map(function(s){ return s.trim(); }).filter(Boolean);
+    if(!lines.length){ toast('Incolla almeno un link'); return; }
+    Promise.all(lines.map(function(u){ return rpc('aria2.addUri', [[u]]); }))
+      .then(function(){ $('urls').value = ''; toast(lines.length > 1 ? 'Download aggiunti' : 'Download aggiunto'); tab = 'active'; refresh(); })
+      .catch(function(err){ toast(err.message); });
+  });
+
+  $('torrent').addEventListener('change', function(e){
+    var files = Array.prototype.slice.call(e.target.files || []);
+    if(!files.length) return;
+    Promise.all(files.map(function(f){
+      return new Promise(function(res, rej){
+        var r = new FileReader();
+        r.onload = function(){ res(String(r.result).split(',')[1]); };
+        r.onerror = function(){ rej(new Error('Lettura file non riuscita')); };
+        r.readAsDataURL(f);
+      }).then(function(b64){ return rpc('aria2.addTorrent', [b64]); });
+    })).then(function(){ toast('Torrent aggiunto'); refresh(); })
+      .catch(function(err){ toast(err.message); });
+    e.target.value = '';
+  });
+
+  refresh();
+  setInterval(refresh, 1500);
+})();
+</script>
+</body>
+</html>
