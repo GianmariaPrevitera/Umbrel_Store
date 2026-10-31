@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>aria2</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Crect width='256' height='256' rx='56' fill='%23066FD1'/%3E%3Cg fill='none' stroke-width='20' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M128 60V150' stroke='%23fff'/%3E%3Cpath d='M92 114L128 150L164 114' stroke='%23fff'/%3E%3Cpath d='M84 196H172' stroke='%23F59F00'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Crect width='256' height='256' rx='56' fill='%23066FD1'/%3E%3Cg fill='none' stroke-width='20' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M128 70V160' stroke='%23fff'/%3E%3Cpath d='M92 124L128 160L164 124' stroke='%23fff'/%3E%3Cpath d='M84 196H172' stroke='%23F59F00'/%3E%3C/g%3E%3C/svg%3E">
 <style>
 :root{
   --bg:#f6f7f9; --card:#fff; --text:#16181d; --muted:#6b7280; --line:#e5e7eb;
@@ -59,7 +59,7 @@ textarea::placeholder{color:var(--muted)}
 <div class="wrap">
   <header>
     <div class="brand">
-      <svg viewBox="0 0 256 256" aria-hidden="true"><rect width="256" height="256" rx="56" fill="#066FD1"/><g fill="none" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"><path d="M128 60V150" stroke="#fff"/><path d="M92 114L128 150L164 114" stroke="#fff"/><path d="M84 196H172" stroke="#F59F00"/></g></svg>
+      <svg viewBox="0 0 256 256" aria-hidden="true"><rect width="256" height="256" rx="56" fill="#066FD1"/><g fill="none" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"><path d="M128 70V160" stroke="#fff"/><path d="M92 124L128 160L164 124" stroke="#fff"/><path d="M84 196H172" stroke="#F59F00"/></g></svg>
       aria2
     </div>
     <div class="stats">
@@ -92,6 +92,10 @@ textarea::placeholder{color:var(--muted)}
 <script src="config.js"></script>
 <script>
 (function(){
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.getRegistrations().then(function(rs){ rs.forEach(function(r){ r.unregister(); }); });
+    if(window.caches){ caches.keys().then(function(ks){ ks.forEach(function(k){ caches.delete(k); }); }); }
+  }
   var SECRET = window.ARIA2_SECRET || '';
   var TOKEN = 'token:' + SECRET;
   var KEYS = ['gid','status','totalLength','completedLength','downloadSpeed','uploadSpeed','files','bittorrent','errorMessage'];
@@ -155,7 +159,7 @@ textarea::placeholder{color:var(--muted)}
       data.active = r[1][0]; data.waiting = r[2][0]; data.stopped = r[3][0];
       $('banner').classList.remove('on');
       render();
-    }).catch(function(){ $('banner').classList.add('on'); });
+    }).catch(function(err){ $('banner').textContent = 'Impossibile contattare aria2: ' + err.message; $('banner').classList.add('on'); });
   }
 
   function render(){

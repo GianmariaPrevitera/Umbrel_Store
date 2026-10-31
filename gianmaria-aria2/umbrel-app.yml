@@ -2,7 +2,7 @@ manifestVersion: 1
 id: gianmaria-aria2
 category: files
 name: aria2
-version: "1.3.0"
+version: "1.3.2"
 tagline: Download manager con interfaccia minimale
 description: >-
   aria2 è un download manager leggero e velocissimo, con una semplice interfaccia web.
@@ -16,7 +16,7 @@ description: >-
 
   Incolla link o magnet, oppure carica un file .torrent: nessuna configurazione necessaria. Al primo avvio viene scaricato aria2, quindi serve connessione a internet.
 releaseNotes: >-
-  Nuova interfaccia minimale inclusa nell'app, al posto di Aria2 WebUI. Corretto l'indirizzo dell'icona (branch master).
+  Nuova icona applicata ovunque: app, intestazione e scheda del browser.
 developer: Gianmaria
 website: https://aria2.github.io
 dependencies: []

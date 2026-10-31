@@ -71,7 +71,7 @@ services:
           root /usr/share/nginx/html;
           index index.html;
           resolver 127.0.0.11 valid=10s;
-          location = /config.js {
+          location ~ ^/(config\.js|service-worker\.js|index\.html)$ {
             add_header Cache-Control "no-store";
           }
           location = /jsonrpc {
