@@ -2,9 +2,9 @@ manifestVersion: 1
 id: gianmaria-adecco
 category: automation
 name: Adecco
-version: "1.1.1"
+version: "1.2.0"
 tagline: Registro presenze e timbrature su Adecco BadgeBox
-icon: https://raw.githubusercontent.com/GianmariaPrevitera/Umbrel_Store/master/gianmaria-adecco/icon.svg
+icon: https://raw.githubusercontent.com/GianmariaPrevitera/Umbrel_Store/main/gianmaria-adecco/icon.svg
 description: >-
   Registro mensile delle presenze letto da Adecco BadgeBox, con riepilogo di ore lavorate, straordinari, assenze e trasferte.
 
@@ -24,6 +24,6 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 releaseNotes: >-
-  Manifest riscritto con tutti i campi standard.
+  Immagine più leggera (php cli alpine con server integrato) al posto di php apache.
 submitter: Gianmaria
 submission: https://github.com/GianmariaPrevitera/Umbrel_Store
