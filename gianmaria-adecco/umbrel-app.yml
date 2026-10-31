@@ -6,16 +6,7 @@ icon: https://raw.githubusercontent.com/GianmariaPrevitera/Umbrel_Store/master/g
 version: "1.1.0"
 tagline: Registro presenze e timbrature su Adecco BadgeBox
 description: >-
-  Registro mensile delle presenze letto da Adecco BadgeBox, con riepilogo di ore lavorate,
-  straordinari, assenze e trasferte.
 
-
-  Dalla pagina puoi timbrare o eliminare i turni della settimana corrente e inviare il
-  timesheet (lunedì-domenica, tagliato a fine mese).
-
-
-  Dopo l'installazione apri le impostazioni dell'app (tasto destro sull'icona > Settings >
-  Advanced > Environment variables) e inserisci BADGEBOX_USERNAME e BADGEBOX_PASSWORD.
 developer: Gianmaria
 website: https://github.com/GianmariaPrevitera/Umbrel_Store
 dependencies: []
