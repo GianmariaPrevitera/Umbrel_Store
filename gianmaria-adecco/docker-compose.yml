@@ -14,11 +14,11 @@ services:
       TZ: Europe/Rome
       # Worker del server integrato di PHP: una chiamata lenta a BadgeBox non blocca la pagina.
       PHP_CLI_SERVER_WORKERS: "4"
-      # Credenziali BadgeBox: si modificano da umbrelOS, in
-      # Impostazioni dell'app > Avanzate > Variabili d'ambiente.
-      BADGEBOX_USERNAME: ""
-      BADGEBOX_PASSWORD: ""
+      # Cartella dove la pagina salva le credenziali BadgeBox (credentials.json).
+      DATA_DIR: /data
     volumes:
       # Pagina e backend (index.html + presenze.php), in sola lettura.
       - ${APP_DATA_DIR}/www:/var/www/html:ro
+      # Dati persistenti: le credenziali sopravvivono ad aggiornamenti e riavvii.
+      - ${APP_DATA_DIR}/data:/data
     command: php -S 0.0.0.0:80 -t /var/www/html

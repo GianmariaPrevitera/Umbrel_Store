@@ -348,6 +348,12 @@
       <h1 class="navbar-brand mb-0">Timbratura</h1>
 
       <div class="navbar-nav flex-row ms-auto">
+        <div class="nav-item me-2">
+          <button type="button" class="btn btn-icon btn-ghost-secondary" id="configBtn"
+            title="Credenziali BadgeBox" aria-label="Credenziali BadgeBox">
+            <i class="ti ti-settings"></i>
+          </button>
+        </div>
         <div class="nav-item">
           <span class="nav-link d-flex align-items-center gap-2">
             <span class="avatar avatar-sm bg-blue-lt" id="userInitials"></span>
@@ -561,6 +567,38 @@
     <div class="modal-footer">
       <button type="button" class="btn btn-link link-secondary" id="stampCancel">Annulla</button>
       <button type="submit" class="btn btn-primary" id="stampSave">Salva</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="configDialog" class="stamp-dialog">
+  <form id="configForm" novalidate>
+    <div class="modal-header">
+      <h5 class="modal-title">Credenziali BadgeBox</h5>
+    </div>
+
+    <div class="modal-body">
+      <div class="mb-3">
+        <label class="form-label" for="configUser">Username</label>
+        <input class="form-control" type="text" id="configUser" maxlength="200"
+          autocomplete="off" autocapitalize="off" spellcheck="false" required>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label" for="configPass">Password</label>
+        <input class="form-control" type="password" id="configPass" maxlength="200"
+          autocomplete="new-password" required>
+      </div>
+
+      <div class="text-secondary small">
+        Prima di salvare si prova un accesso a BadgeBox. La password resta sul server e non viene mai mostrata.
+      </div>
+      <div id="configError" class="text-danger mt-2" hidden></div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-link link-secondary" id="configCancel">Annulla</button>
+      <button type="submit" class="btn btn-primary" id="configSave">Salva</button>
     </div>
   </form>
 </dialog>
@@ -903,7 +941,10 @@
     const data = await response.json().catch(() => null);
 
     if (!response.ok) {
-      throw new Error((data && data.error) || `errore ${response.status}`);
+      const error = new Error((data && data.error) || `errore ${response.status}`);
+
+      error.status = response.status;
+      throw error;
     }
 
     return data;
@@ -972,8 +1013,16 @@
       }
 
       attendance = {};
-      showMessageRow("Dati non disponibili");
       setSummary(null);
+
+      // 409: credenziali BadgeBox non ancora salvate, si apre il form di configurazione.
+      if (error.status === 409) {
+        showMessageRow("Credenziali BadgeBox non configurate");
+        openConfigDialog();
+        return;
+      }
+
+      showMessageRow("Dati non disponibili");
       showError(error.message || String(error));
     }
   }
@@ -1208,6 +1257,80 @@
       setBusy(false);
     }
   });
+
+  /* ------------------------------------------------------------------------
+   * Credenziali BadgeBox (salvate sul server, la password non torna mai al browser)
+   * ---------------------------------------------------------------------- */
+
+  const configDialog = el("configDialog");
+  const configForm = el("configForm");
+
+  function showConfigError(message) {
+    const box = el("configError");
+
+    box.textContent = message || "";
+    box.hidden = !message;
+  }
+
+  function setConfigBusy(busy) {
+    el("configSave").disabled = busy;
+    el("configCancel").disabled = busy;
+  }
+
+  async function openConfigDialog() {
+    el("configUser").value = "";
+    el("configPass").value = "";
+    el("configPass").required = true;
+    el("configPass").placeholder = "";
+    showConfigError("");
+    setConfigBusy(false);
+
+    if (!configDialog.open) {
+      configDialog.showModal();
+    }
+
+    try {
+      const status = await fetchJson(apiUrl("config"), { cache: "no-store" });
+
+      el("configUser").value = status.username || "";
+
+      // Con credenziali già salvate la password si può lasciare vuota (resta quella attuale).
+      el("configPass").required = !status.configurata;
+      el("configPass").placeholder = status.configurata ? "Lascia vuota per non cambiarla" : "";
+    } catch (error) {
+      showConfigError(error.message || String(error));
+    }
+  }
+
+  el("configBtn").addEventListener("click", openConfigDialog);
+  el("configCancel").addEventListener("click", () => configDialog.close());
+
+  configForm.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    if (!configForm.reportValidity()) {
+      return;
+    }
+
+    setConfigBusy(true);
+    showConfigError("");
+
+    try {
+      await postJson(apiUrl("config-salva"), {
+        username: el("configUser").value.trim(),
+        password: el("configPass").value
+      });
+
+      el("configPass").value = "";
+      configDialog.close();
+      loadMonth();
+    } catch (error) {
+      showConfigError(error.message || String(error));
+      setConfigBusy(false);
+    }
+  });
+
+  el("configBtn").hidden = DEMO_MODE;
 
   // Primo caricamento.
   loadMonth();

@@ -10,27 +10,17 @@
  *   POST presenze.php?a=timesheet            {}                              invia il timesheet della settimana corrente (lunedì-domenica, tagliata a fine mese)
  * Le modifiche sono ammesse solo per la settimana corrente (lunedì-domenica); non si può timbrare dopo oggi.
  *
- * Configurazione: compila USERNAME e PASSWORD in CONFIG qui sotto. Il file .php viene eseguito dal web
- * server e non scaricato, quindi le credenziali non sono leggibili dal browser. In alternativa (o in
- * aggiunta) si può usare un file .env con le stesse chiavi, accanto a questo file o all'indirizzo ENV_FILE:
- * se lo usi, tienilo fuori dalla cartella pubblica o bloccane l'accesso dal web server.
+ * Credenziali BadgeBox: si inseriscono dalla pagina (icona ingranaggio, o il form che compare al primo
+ * avvio) e sono salvate in credentials.json nella cartella dati (variabile d'ambiente DATA_DIR, di
+ * default ./data accanto a questo file). Prima di salvare si prova un login su BadgeBox.
+ *   GET  presenze.php?a=config               stato: {"configurata", "username"} (la password non esce mai dal server)
+ *   POST presenze.php?a=config-salva         {"username","password"}         salva le credenziali (password vuota = invariata)
  *
- * Requisiti: PHP 7.4+ (mod_php o php-fpm) con l'estensione cURL (pacchetto php-curl) oppure, in
+ * Requisiti: PHP 7.4+ (mod_php, php-fpm o server integrato) con l'estensione cURL (pacchetto php-curl) oppure, in
  * mancanza, allow_url_fopen attivo. Variabile d'ambiente opzionale: BADGEBOX_URL.
  *
  * Prova senza web server:  php -S 127.0.0.1:8080 presenze.php   e apri http://127.0.0.1:8080
  */
-
-// --- Configurazione: compila qui ---------------------------------------------------
-const CONFIG = [
-    'USERNAME' => '',
-    'PASSWORD' => '',
-    // Facoltativi: orari usati se la richiesta non indica le fasce (la pagina le manda sempre).
-    // 'CHECKIN_TIME' => '09:00',
-    // 'PAUSE_IN_TIME' => '13:00',
-    // 'PAUSE_OUT_TIME' => '14:00',
-    // 'CHECKOUT_TIME' => '18:00',
-];
 
 const BASE_URL_PREDEFINITA = 'https://adecco.badgebox.com';
 const DEVICE_ID = '95a2d39d-0897-6f07-bb78-4fc383e4e44b';
@@ -43,7 +33,7 @@ const TIPO_NORMALE = '-1';
 const TIPI_VALIDI = ['-1', '251', '252'];
 const ETICHETTE_TIPO = ['251' => 'smart working', '252' => 'trasferta'];
 
-// Orari di default (08-13 14-20), sovrascrivibili dal .env.
+// Orari di default (08-13 14-20), usati se la richiesta non indica le fasce.
 const ORARI_DEFAULT = [
     'CHECKIN_TIME' => '08:00',
     'PAUSE_IN_TIME' => '13:00',
@@ -150,7 +140,7 @@ function turnoDaFasce(array $fasce)
     return $turno;
 }
 
-/** Orari di default (08-13 14-20), sovrascrivibili dal .env. */
+/** Orari di default (08-13 14-20). */
 function turnoDaEnv(array $env)
 {
     $orari = [];
@@ -158,7 +148,7 @@ function turnoDaEnv(array $env)
         $valore = isset($env[$nome]) && $env[$nome] !== '' ? $env[$nome] : ORARI_DEFAULT[$nome];
         $orari[$nome] = normalizzaOra($valore);
         if ($orari[$nome] === null) {
-            throw new Errore('Errore: orari non validi nel .env (formato HH:MM).');
+            throw new Errore('Errore: orari non validi (formato HH:MM).');
         }
     }
     $a = inMinuti($orari['CHECKIN_TIME']);
@@ -166,7 +156,7 @@ function turnoDaEnv(array $env)
     $c = inMinuti($orari['PAUSE_OUT_TIME']);
     $d = inMinuti($orari['CHECKOUT_TIME']);
     if (!($a < $b && $b < $c && $c < $d)) {
-        throw new Errore('Errore: gli orari nel .env devono essere in ordine (ingresso < pausa < uscita).');
+        throw new Errore('Errore: gli orari devono essere in ordine (ingresso < pausa < uscita).');
     }
     return nuovoTurno($orari['CHECKIN_TIME'], $orari['CHECKOUT_TIME'], $orari['PAUSE_IN_TIME'], $orari['PAUSE_OUT_TIME']);
 }
@@ -180,59 +170,95 @@ function settimanaCorrente()
     return [$lunedi, $domenica];
 }
 
-// --- Configurazione (.env) -----------------------------------------------------
+// --- Credenziali (credentials.json nella cartella dati) -------------------------
 
-function leggiEnv($percorso)
+/** Credenziali non ancora salvate: la pagina mostra il form di configurazione. */
+class CredenzialiMancanti extends Errore
 {
-    if (!is_file($percorso)) {
-        throw new Errore("file $percorso non trovato.");
+}
+
+function cartellaDati()
+{
+    $d = getenv('DATA_DIR');
+    return rtrim($d !== false && $d !== '' ? $d : __DIR__ . '/data', '/');
+}
+
+function fileCredenziali()
+{
+    return cartellaDati() . '/credentials.json';
+}
+
+/** ['USERNAME' => ..., 'PASSWORD' => ...] oppure null se non sono salvate (o il file non è valido). */
+function leggiCredenzialiSalvate()
+{
+    $file = fileCredenziali();
+    if (!is_file($file)) {
+        return null;
     }
-    $env = [];
-    foreach (preg_split('/\R/', (string)file_get_contents($percorso)) as $riga) {
-        $riga = trim($riga);
-        if ($riga === '' || $riga[0] === '#') {
-            continue;
-        }
-        if (strpos($riga, 'export ') === 0) {
-            $riga = ltrim(substr($riga, 7));
-        }
-        $pos = strpos($riga, '=');
-        if ($pos === false) {
-            continue;
-        }
-        $chiave = trim(substr($riga, 0, $pos));
-        $valore = trim(substr($riga, $pos + 1));
-        $n = strlen($valore);
-        if ($n >= 2 && $valore[0] === $valore[$n - 1] && ($valore[0] === '"' || $valore[0] === "'")) {
-            $valore = substr($valore, 1, -1);
-        } else {
-            $valore = preg_replace('/\s+#.*$/', '', $valore);
-        }
-        $env[$chiave] = $valore;
+    $d = json_decode((string)@file_get_contents($file), true);
+    if (!is_array($d) || !isset($d['username'], $d['password'])
+        || !is_string($d['username']) || !is_string($d['password'])
+        || $d['username'] === '' || $d['password'] === '') {
+        return null;
     }
-    return $env;
+    return ['USERNAME' => $d['username'], 'PASSWORD' => $d['password']];
 }
 
 function leggiCredenziali()
 {
-    $env = CONFIG;
-    $percorso = getenv('ENV_FILE') ?: __DIR__ . '/.env';
-    if (is_file($percorso)) {   // il .env è facoltativo e ha la precedenza su CONFIG
-        $env = array_merge($env, leggiEnv($percorso));
+    $cred = leggiCredenzialiSalvate();
+    if ($cred === null) {
+        throw new CredenzialiMancanti('credenziali BadgeBox non configurate.');
     }
-    // Le variabili d'ambiente (impostazioni dell'app su Umbrel) hanno la precedenza su .env e CONFIG.
-    foreach (['USERNAME' => 'BADGEBOX_USERNAME', 'PASSWORD' => 'BADGEBOX_PASSWORD'] as $chiave => $nomeVariabile) {
-        $valore = getenv($nomeVariabile);
-        if ($valore !== false && $valore !== '') {
-            $env[$chiave] = $valore;
-        }
+    return $cred;
+}
+
+/** Stato per la pagina: mai la password. */
+function statoConfigurazione()
+{
+    $cred = leggiCredenzialiSalvate();
+    return ['configurata' => $cred !== null, 'username' => $cred !== null ? $cred['USERNAME'] : ''];
+}
+
+/**
+ * Salva le credenziali dopo un login di prova su BadgeBox (se fallisce non salva nulla).
+ * Con la password vuota e credenziali già salvate si tiene la password attuale.
+ */
+function salvaCredenziali(array $corpo)
+{
+    $username = trim(isset($corpo['username']) && is_string($corpo['username']) ? $corpo['username'] : '');
+    $password = isset($corpo['password']) && is_string($corpo['password']) ? $corpo['password'] : '';
+    $attuali = leggiCredenzialiSalvate();
+    if ($password === '' && $attuali !== null) {
+        $password = $attuali['PASSWORD'];
     }
-    foreach (['USERNAME', 'PASSWORD'] as $variabile) {
-        if (!isset($env[$variabile]) || $env[$variabile] === '') {
-            throw new Errore("credenziali mancanti: imposta BADGEBOX_$variabile nelle variabili d'ambiente dell'app (o $variabile in .env / CONFIG).");
-        }
+    if ($username === '' || $password === '') {
+        throw new Errore('inserisci username e password.');
     }
-    return $env;
+    if (strlen($username) > 200 || strlen($password) > 200) {
+        throw new Errore('username o password troppo lunghi.');
+    }
+
+    $bb = new BadgeBox($username, $password);
+    $bb->connetti();
+
+    $cartella = cartellaDati();
+    if (!is_dir($cartella) && !@mkdir($cartella, 0700, true)) {
+        throw new Errore('impossibile creare la cartella dati.');
+    }
+    $file = fileCredenziali();
+    $tmp = $file . '.tmp';
+    $json = json_encode(['username' => $username, 'password' => $password], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    if (@file_put_contents($tmp, $json, LOCK_EX) === false || !@chmod($tmp, 0600) || !@rename($tmp, $file)) {
+        @unlink($tmp);
+        throw new Errore('impossibile salvare le credenziali (cartella dati non scrivibile).');
+    }
+
+    if ($attuali !== null) {
+        BadgeBox::dimenticaSessione($attuali);   // la sessione del vecchio utente non serve più
+    }
+    $bb->salvaSessione(['USERNAME' => $username, 'PASSWORD' => $password]);
+    return ['ok' => true, 'username' => $username];
 }
 
 // --- Client BadgeBox -----------------------------------------------------------
@@ -945,7 +971,7 @@ function leggiCorpoJson()
     return $corpo;
 }
 
-/** Azione richiesta: ?a=dati|timbra|elimina-giorno|timesheet oppure il percorso /dati, /timbra, ... */
+/** Azione richiesta: ?a=dati|timbra|elimina-giorno|timesheet|config|config-salva oppure il percorso /dati, /timbra, ... */
 function azioneRichiesta()
 {
     if (isset($_GET['a']) && is_string($_GET['a'])) {
@@ -953,7 +979,7 @@ function azioneRichiesta()
     }
     $percorso = parse_url(isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/', PHP_URL_PATH);
     $nome = basename(is_string($percorso) ? $percorso : '/');
-    return in_array($nome, ['dati', 'timbra', 'elimina-giorno', 'timesheet'], true) ? $nome : '';
+    return in_array($nome, ['dati', 'timbra', 'elimina-giorno', 'timesheet', 'config', 'config-salva'], true) ? $nome : '';
 }
 
 /** Serve la pagina index.html (o presenze.html), riletta a ogni richiesta. */
@@ -994,6 +1020,10 @@ function principale()
                 rispondiJson(400, ['error' => 'mese non valido']);
             }
             rispondiJson(200, datiDelMese($mese, leggiCredenziali()));
+        } elseif ($azione === 'config') {
+            rispondiJson(200, statoConfigurazione());
+        } elseif ($azione === 'config-salva') {
+            rispondiJson(200, salvaCredenziali(leggiCorpoJson()));
         } elseif ($azione === 'timbra' || $azione === 'elimina-giorno' || $azione === 'timesheet') {
             $corpo = leggiCorpoJson();
             $cred = leggiCredenziali();
@@ -1006,6 +1036,8 @@ function principale()
         } else {
             rispondiJson(404, ['error' => 'azione sconosciuta']);
         }
+    } catch (CredenzialiMancanti $e) {
+        rispondiJson(409, ['error' => $e->getMessage(), 'config' => true]);
     } catch (Errore $e) {
         rispondiJson($azione === 'dati' ? 502 : 400, ['error' => $e->getMessage()]);
     } catch (Throwable $e) {

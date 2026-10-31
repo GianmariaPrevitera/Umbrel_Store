@@ -2,7 +2,7 @@ manifestVersion: 1
 id: gianmaria-adecco
 category: automation
 name: Adecco
-version: "1.2.1"
+version: "1.3.0"
 tagline: Registro presenze e timbrature su Adecco BadgeBox
 icon: https://raw.githubusercontent.com/GianmariaPrevitera/Umbrel_Store/master/gianmaria-adecco/icon.svg
 description: >-
@@ -12,7 +12,7 @@ description: >-
   Dalla pagina puoi timbrare o eliminare i turni della settimana corrente e inviare il timesheet (da lunedì a domenica, tagliato a fine mese).
 
 
-  Dopo l'installazione apri le impostazioni dell'app e, in Avanzate, imposta le variabili BADGEBOX_USERNAME e BADGEBOX_PASSWORD con le tue credenziali BadgeBox.
+  Al primo avvio compare un modulo: inserisci username e password di BadgeBox. Puoi cambiarle in qualsiasi momento con l'icona a forma di ingranaggio in alto.
 developer: Gianmaria
 website: https://github.com/GianmariaPrevitera/Umbrel_Store
 dependencies: []
@@ -24,6 +24,6 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 releaseNotes: >-
-  Corretto il percorso dell icona (branch master).
+  Le credenziali BadgeBox si inseriscono dalla pagina dell'app (con prova di accesso prima del salvataggio) e restano nella cartella dati.
 submitter: Gianmaria
 submission: https://github.com/GianmariaPrevitera/Umbrel_Store
