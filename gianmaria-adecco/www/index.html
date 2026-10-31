@@ -2,602 +2,77 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Timbratura | Registro presenze</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Registro presenze</title>
+
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 
   <!-- Tabler -->
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.34.0/dist/tabler-icons.min.css">
 
   <!-- SweetAlert2 -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.min.css">
 
   <style>
-    :root {
-      --app-bg: #f4f6fa;
-      --app-primary: #206bc4;
-      --app-text: #182433;
-      --app-muted: #667382;
-      --app-border: #e9edf3;
-      --app-radius: 12px;
-    }
-
-    body {
-      background: var(--app-bg);
-      color: var(--app-text);
-      font-size: 14px;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    .page-wrapper {
-      min-height: 100vh;
-    }
-
-    .navbar {
-      min-height: 66px;
-      background: #fff;
-      border-bottom: 1px solid var(--app-border);
-      box-shadow: 0 2px 8px rgba(24,36,51,.025);
-    }
-
-    .navbar-brand {
-      font-size: 21px;
-      font-weight: 750;
-      letter-spacing: -.5px;
-      color: var(--app-text);
-    }
-
-    .navbar-brand::before {
-      content: "";
-      display: inline-block;
-      width: 9px;
-      height: 9px;
-      margin-right: 11px;
-      border-radius: 3px;
-      background: var(--app-primary);
-      vertical-align: 2px;
-    }
-
-    .page-body {
-      padding-top: 28px;
-      padding-bottom: 40px;
-    }
-
-    .avatar {
-      font-weight: 700;
-    }
-
-    /* Navigazione calendario */
-
-    .calendar-toolbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    .month-navigation {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-    }
-
-    .month-title {
-      min-width: 125px;
-      text-align: center;
-      font-size: 21px;
-      font-weight: 750;
-      letter-spacing: -.5px;
-    }
-
-    .month-navigation .btn,
-    .year-navigation .btn {
-      border-radius: 8px;
-    }
-
-    .month-navigation > .btn {
-      width: 36px;
-      height: 36px;
-    }
-
-    .year-navigation {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      margin-left: 4px;
-    }
-
-    .year-navigation .btn {
-      width: 30px;
-      height: 19px;
-      min-height: 19px;
-      padding: 0;
-    }
-
-    .year-value {
-      min-width: 58px;
-      text-align: center;
-      font-size: 14px;
-      font-weight: 700;
-      line-height: 22px;
-      font-variant-numeric: tabular-nums;
-    }
-
-    #todayBtn {
-      border-radius: 8px;
-      font-weight: 600;
-      padding: 8px 14px;
-    }
-
-    /* Riepilogo */
-
-    .row-cards {
-      row-gap: 14px;
-    }
-
-    .summary-card {
-      height: 100%;
-      border: 1px solid var(--app-border);
-      border-radius: var(--app-radius);
-      box-shadow: 0 2px 7px rgba(24,36,51,.035);
-      transition: transform .2s ease, box-shadow .2s ease;
-      overflow: hidden;
-    }
-
-    .summary-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 7px 18px rgba(24,36,51,.07);
-    }
-
-    .summary-card .card-body {
-      padding: 17px 18px;
-    }
-
-    .summary-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-    }
-
-    .summary-label {
-      color: var(--app-muted);
-      font-size: 12px;
-      font-weight: 600;
-    }
-
-    .summary-icon {
-      width: 31px;
-      height: 31px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 8px;
-      font-size: 17px;
-    }
-
-    .summary-value {
-      margin-top: 10px;
-      font-size: clamp(19px, 2vw, 25px);
-      font-weight: 750;
-      line-height: 1.3;
-      white-space: nowrap;
-      letter-spacing: -.6px;
-      font-variant-numeric: tabular-nums;
-    }
-
-    /* Tabella */
-
-    .attendance-card {
-      border: 1px solid var(--app-border);
-      border-radius: var(--app-radius);
-      box-shadow: 0 2px 9px rgba(24,36,51,.035);
-      overflow: hidden;
-    }
-
-    .attendance-table {
-      margin-bottom: 0;
-    }
-
-    .attendance-table thead th {
-      padding: 15px 18px;
-      background: #f9fafc;
-      color: #8793a2;
-      font-size: 10px;
-      font-weight: 750;
-      letter-spacing: .8px;
-      text-transform: uppercase;
-      white-space: nowrap;
-      border-bottom: 1px solid var(--app-border);
-    }
-
-    .attendance-table tbody td {
-      padding: 19px 18px;
-      vertical-align: middle;
-      border-color: var(--app-border);
-    }
-
-    .attendance-table tbody tr:not(.week-row) {
-      transition: background .15s ease;
-    }
-
-    .attendance-table tbody tr:not(.week-row):hover {
-      background: #f9fbfe;
-    }
-
-    .day-cell {
-      width: 185px;
-      min-width: 160px;
-      color: #354052;
-      font-size: 12px;
-      font-weight: 700;
-      white-space: nowrap;
-    }
-
-    .punches-cell {
-      min-width: 400px;
-    }
+    /* Solo il minimo che Tabler non offre: griglia delle timbrature e larghezze delle colonne. */
+    .table-attendance .day-cell { width: 10rem; white-space: nowrap; }
+    .table-attendance .punches-cell { min-width: 24rem; }
+    .table-attendance .hours-cell { width: 8.5rem; white-space: nowrap; text-align: center; }
+    .table-attendance .actions-cell { width: 6rem; white-space: nowrap; text-align: center; }
+    .table-attendance .hours-cell,
+    .punch { font-variant-numeric: tabular-nums; }
 
     .punch-grid {
       display: grid;
-      grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr);
-      column-gap: 24px;
-      row-gap: 12px;
-      max-width: 680px;
+      grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+      gap: .5rem 1.5rem;
+      max-width: 42rem;
     }
 
     .punch {
       display: flex;
       align-items: center;
-      gap: 10px;
-      min-height: 20px;
-      color: #354052;
-      font-size: 13px;
-      font-weight: 550;
-      font-variant-numeric: tabular-nums;
+      gap: .5rem;
       white-space: nowrap;
     }
 
-    .punch-dot {
-      width: 9px;
-      height: 9px;
-      flex: 0 0 9px;
-      border-radius: 50%;
-    }
+    .punch .status-dot { margin: 0; }
 
-    .dot-green { background: #2fb344; }
-    .dot-red { background: #d63939; }
-    .dot-yellow { background: #e6a700; }
-    .dot-blue { background: #206bc4; }
-    .dot-purple { background: #ae3ec9; }
-
-    .punch-dot.dot-blue {
-      margin-left: -14px;
-      margin-right: 6px;
-      position: relative;
-      outline: 2px solid #fff;
-    }
-
-    /* Note e categorie */
-
-    .day-notes {
-      margin-top: 13px;
-      padding-top: 10px;
-      color: var(--app-muted);
-      font-size: 12px;
-      line-height: 1.6;
-      border-top: 1px dashed #e8edf3;
-    }
-
-    .day-tags {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 5px;
-    }
-
-    .tag {
-      display: inline-flex;
-      align-items: center;
-      padding: 3px 9px;
-      border-radius: 5px;
-      font-size: 10px;
-      font-weight: 700;
-      line-height: 1.5;
-    }
-
-    .tag-red {
-      background: #fbe9e9;
-      color: #a83232;
-    }
-
-    .tag-yellow {
-      background: #fff3d0;
-      color: #946200;
-    }
-
-    .tag-blue {
-      background: #e5efff;
-      color: #205bb2;
-    }
-
-    .tag-green {
-      background: #dff7e5;
-      color: #20763a;
-    }
-
-    .tag-purple {
-      background: #f5e6fa;
-      color: #7a2b94;
-    }
-
-    /* Ore */
-
-    .hours-cell {
-      width: 135px;
-      min-width: 120px;
-      text-align: center;
-      white-space: nowrap;
-    }
-
-    .hours-total {
-      color: #354052;
-      font-size: 13px;
-      font-weight: 650;
-      line-height: 1.8;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .hours-overtime {
-      color: #206bc4;
-    }
-
-    .empty-day {
-      color: #c5ccd6;
-    }
-
-    /* Azioni */
-
-    .actions-cell {
-      width: 96px;
-      min-width: 96px;
-      text-align: center;
-      white-space: nowrap;
-    }
-
-    .actions-cell .btn {
-      width: 31px;
-      height: 31px;
-      margin: 0 2px;
-      border-radius: 7px;
-    }
-
-    .week-row td {
-      padding: 12px 18px !important;
-      background: #f0f5fc;
-      border-color: var(--app-border);
-    }
-
-    .week-row-inner {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 10px;
-      color: #354052;
-      font-size: 12px;
-      font-weight: 650;
-    }
-
-    .week-row-inner .btn {
-      border-radius: 7px;
-      font-weight: 600;
-    }
-
-    /* Dialog timbratura e configurazione */
-
-    .stamp-dialog {
-      border: 0;
-      border-radius: 12px;
-      padding: 0;
-      width: min(460px, 92vw);
-      color: var(--tblr-body-color);
-      background: var(--tblr-bg-surface, #fff);
-      box-shadow: 0 15px 55px rgba(0,0,0,.2);
-    }
-
-    .stamp-dialog::backdrop {
-      background: rgba(15,23,42,.5);
-      backdrop-filter: blur(3px);
-    }
-
-    .stamp-dialog .modal-header,
-    .stamp-dialog .modal-footer {
-      padding: 18px 22px;
-    }
-
-    .stamp-dialog .modal-body {
-      padding: 20px 22px;
-    }
-
-    .stamp-dialog .modal-title {
-      font-weight: 750;
-    }
-
-    .stamp-dialog .form-control,
-    .stamp-dialog .form-select {
-      border-radius: 7px;
-    }
-
-    .stamp-dialog .btn {
-      border-radius: 7px;
-      font-weight: 600;
-    }
-
-    /* SweetAlert2 */
-
+    /* SweetAlert2 con lo stile di Tabler */
     .swal2-popup {
-      border-radius: 14px !important;
-      padding: 25px !important;
-      font-family: inherit !important;
-      color: var(--app-text) !important;
+      border-radius: var(--tblr-border-radius-lg, 8px);
+      font-size: var(--tblr-body-font-size, .875rem);
     }
 
-    .swal2-title {
-      font-size: 19px !important;
-      font-weight: 750 !important;
-      letter-spacing: -.3px;
-    }
-
-    .swal2-html-container {
-      color: var(--app-muted) !important;
-      font-size: 13px !important;
-      line-height: 1.6 !important;
-    }
-
-    .swal2-confirm,
-    .swal2-cancel,
-    .swal2-deny {
-      border-radius: 7px !important;
-      font-size: 13px !important;
-      font-weight: 650 !important;
-      padding: 9px 17px !important;
-      box-shadow: none !important;
-    }
-
-    .swal2-confirm {
-      background: var(--app-primary) !important;
-    }
-
-    .swal2-cancel {
-      background: #f0f2f5 !important;
-      color: #354052 !important;
-    }
-
-    .swal2-input,
-    .swal2-select,
-    .swal2-textarea {
-      border: 1px solid #dce2ea !important;
-      border-radius: 7px !important;
-      box-shadow: none !important;
-      font-size: 13px !important;
-    }
-
-    .swal2-input:focus,
-    .swal2-select:focus,
-    .swal2-textarea:focus {
-      border-color: var(--app-primary) !important;
-      box-shadow: 0 0 0 3px rgba(32,107,196,.1) !important;
-    }
-
-    .swal2-validation-message {
-      border-radius: 7px !important;
-      font-size: 12px !important;
-    }
-
-    .swal2-timer-progress-bar {
-      background: var(--app-primary) !important;
-    }
-
-    @media (max-width: 767px) {
-      .page-body {
-        padding: 16px 8px;
-      }
-
-      .navbar-brand {
-        font-size: 18px;
-      }
-
-      .calendar-toolbar {
-        gap: 14px;
-        margin-bottom: 18px;
-      }
-
-      .month-navigation {
-        flex-wrap: wrap;
-        gap: 6px;
-      }
-
-      .month-title {
-        min-width: 105px;
-        font-size: 18px;
-      }
-
-      .summary-card .card-body {
-        padding: 13px;
-      }
-
-      .summary-value {
-        font-size: 20px;
-      }
-
-      .attendance-table tbody td {
-        padding: 15px 12px;
-      }
-
-      .attendance-table thead th {
-        padding: 13px 12px;
-      }
-
-      .punches-cell {
-        min-width: 390px;
-      }
-
-      .punch-grid {
-        grid-template-columns: 1fr 1fr;
-        column-gap: 12px;
-      }
-
-      .day-cell {
-        min-width: 140px;
-        width: 140px;
-      }
-
-      .hours-cell {
-        min-width: 100px;
-      }
-
-      .week-row-inner {
-        align-items: flex-start;
-      }
-
-      .swal2-popup {
-        width: calc(100% - 24px) !important;
-        padding: 20px !important;
-      }
-    }
+    .swal2-title { font-size: 1.25rem; font-weight: 600; }
+    .swal2-html-container { overflow: visible; }
+    .swal2-validation-message { justify-content: flex-start; }
+    .swal2-actions { gap: .5rem; }
+    .swal2-actions .btn { margin: 0; }
   </style>
 </head>
 
-<body>
+<body class="antialiased">
 <div class="page">
 
-  <!-- HEADER -->
   <header class="navbar navbar-expand-md d-print-none">
     <div class="container-xl">
-      <h1 class="navbar-brand mb-0">Timbratura</h1>
+      <h1 class="navbar-brand navbar-brand-autodark mb-0 pe-0 pe-md-3">
+        <i class="ti ti-fingerprint me-2"></i>Timbratura
+      </h1>
 
-      <div class="navbar-nav flex-row ms-auto">
+      <div class="navbar-nav flex-row ms-auto align-items-center">
         <div class="nav-item me-2">
-          <button type="button"
-            class="btn btn-icon btn-ghost-secondary"
-            id="configBtn"
-            title="Credenziali BadgeBox"
-            aria-label="Credenziali BadgeBox">
+          <button type="button" class="btn btn-icon btn-ghost-secondary" id="configBtn"
+            title="Credenziali BadgeBox" aria-label="Credenziali BadgeBox">
             <i class="ti ti-settings"></i>
           </button>
         </div>
-
         <div class="nav-item">
-          <span class="nav-link d-flex align-items-center gap-2">
+          <span class="nav-link d-flex lh-1 text-reset p-0">
             <span class="avatar avatar-sm bg-blue-lt" id="userInitials"></span>
-            <span id="userName"></span>
+            <span class="ps-2 d-none d-sm-block" id="userName"></span>
           </span>
         </div>
       </div>
@@ -605,142 +80,149 @@
   </header>
 
   <div class="page-wrapper">
+
+    <!-- Titolo e navigazione mese / anno -->
+    <div class="page-header d-print-none">
+      <div class="container-xl">
+        <div class="row g-2 align-items-center">
+          <div class="col">
+            <div class="page-pretitle">Registro presenze</div>
+            <h2 class="page-title">
+              <span id="monthTitle">Ottobre</span>
+              <span class="text-secondary fw-normal ms-1" id="yearValue">2026</span>
+            </h2>
+          </div>
+
+          <div class="col-auto ms-auto">
+            <div class="btn-list">
+              <div class="btn-group" role="group" aria-label="Navigazione">
+                <button type="button" class="btn btn-icon" id="prevYear" title="Anno precedente" aria-label="Anno precedente">
+                  <i class="ti ti-chevrons-left"></i>
+                </button>
+                <button type="button" class="btn btn-icon" id="prevMonth" title="Mese precedente" aria-label="Mese precedente">
+                  <i class="ti ti-chevron-left"></i>
+                </button>
+                <button type="button" class="btn btn-icon" id="nextMonth" title="Mese successivo" aria-label="Mese successivo">
+                  <i class="ti ti-chevron-right"></i>
+                </button>
+                <button type="button" class="btn btn-icon" id="nextYear" title="Anno successivo" aria-label="Anno successivo">
+                  <i class="ti ti-chevrons-right"></i>
+                </button>
+              </div>
+
+              <button type="button" class="btn btn-outline-primary" id="todayBtn">
+                <i class="ti ti-calendar-event me-1"></i>Vai a oggi
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="page-body">
       <div class="container-xl">
 
-        <!-- NAVIGAZIONE MESE -->
-        <div class="calendar-toolbar">
-
-          <div class="month-navigation">
-
-            <button class="btn btn-icon btn-ghost-secondary"
-              id="prevMonth"
-              aria-label="Mese precedente">
-              <i class="ti ti-chevron-left"></i>
-            </button>
-
-            <span class="month-title" id="monthTitle">Ottobre</span>
-
-            <div class="year-navigation">
-              <button type="button"
-                class="btn btn-icon btn-ghost-secondary"
-                id="prevYear"
-                aria-label="Anno precedente">
-                <i class="ti ti-chevron-up"></i>
-              </button>
-
-              <span id="yearValue" class="year-value">2026</span>
-
-              <button type="button"
-                class="btn btn-icon btn-ghost-secondary"
-                id="nextYear"
-                aria-label="Anno successivo">
-                <i class="ti ti-chevron-down"></i>
-              </button>
-            </div>
-
-            <button class="btn btn-icon btn-ghost-secondary"
-              id="nextMonth"
-              aria-label="Mese successivo">
-              <i class="ti ti-chevron-right"></i>
-            </button>
-
-          </div>
-
-          <button class="btn btn-outline-secondary" id="todayBtn">
-            <i class="ti ti-calendar me-1"></i>
-            Vai a oggi
-          </button>
-
-        </div>
-
+        <!-- Errori di lettura dati -->
         <div id="errorBox"></div>
 
-        <!-- RIEPILOGO -->
-        <div class="row row-cards mb-3">
+        <!-- Riepilogo del mese -->
+        <div class="row row-deck row-cards mb-3">
 
           <div class="col-6 col-md-4 col-xl">
-            <div class="card summary-card">
+            <div class="card card-sm">
               <div class="card-body">
-                <div class="summary-header">
-                  <div class="summary-label">Ore lavorate</div>
-                  <div class="summary-icon bg-green-lt text-green">
-                    <i class="ti ti-clock"></i>
+                <div class="row align-items-center">
+                  <div class="col-auto">
+                    <span class="bg-green text-white avatar"><i class="ti ti-clock"></i></span>
+                  </div>
+                  <div class="col">
+                    <div class="fw-semibold text-nowrap" id="workedHours">0h 00m</div>
+                    <div class="text-secondary">Ore lavorate</div>
                   </div>
                 </div>
-                <div class="summary-value" id="workedHours">0h 00m</div>
               </div>
             </div>
           </div>
 
           <div class="col-6 col-md-4 col-xl">
-            <div class="card summary-card">
+            <div class="card card-sm">
               <div class="card-body">
-                <div class="summary-header">
-                  <div class="summary-label">Ore assenza</div>
-                  <div class="summary-icon bg-red-lt text-red">
-                    <i class="ti ti-calendar-x"></i>
+                <div class="row align-items-center">
+                  <div class="col-auto">
+                    <span class="bg-red text-white avatar"><i class="ti ti-beach"></i></span>
+                  </div>
+                  <div class="col">
+                    <div class="fw-semibold text-nowrap" id="absenceHours">0h 00m</div>
+                    <div class="text-secondary">Ore assenza</div>
                   </div>
                 </div>
-                <div class="summary-value text-danger" id="absenceHours">0h 00m</div>
               </div>
             </div>
           </div>
 
           <div class="col-6 col-md-4 col-xl">
-            <div class="card summary-card">
+            <div class="card card-sm">
               <div class="card-body">
-                <div class="summary-header">
-                  <div class="summary-label">Ore straordinario</div>
-                  <div class="summary-icon bg-blue-lt text-blue">
-                    <i class="ti ti-trending-up"></i>
+                <div class="row align-items-center">
+                  <div class="col-auto">
+                    <span class="bg-blue text-white avatar"><i class="ti ti-hourglass"></i></span>
+                  </div>
+                  <div class="col">
+                    <div class="fw-semibold text-nowrap" id="overtimeHours">0h 00m</div>
+                    <div class="text-secondary">Ore straordinario</div>
                   </div>
                 </div>
-                <div class="summary-value text-primary" id="overtimeHours">0h 00m</div>
               </div>
             </div>
           </div>
 
           <div class="col-6 col-md-6 col-xl">
-            <div class="card summary-card">
+            <div class="card card-sm">
               <div class="card-body">
-                <div class="summary-header">
-                  <div class="summary-label">Giorni trasferta</div>
-                  <div class="summary-icon bg-yellow-lt text-yellow">
-                    <i class="ti ti-plane"></i>
+                <div class="row align-items-center">
+                  <div class="col-auto">
+                    <span class="bg-yellow text-white avatar"><i class="ti ti-plane"></i></span>
+                  </div>
+                  <div class="col">
+                    <div class="fw-semibold text-nowrap" id="travelDays">0</div>
+                    <div class="text-secondary">Giorni trasferta</div>
                   </div>
                 </div>
-                <div class="summary-value text-warning" id="travelDays">0</div>
               </div>
             </div>
           </div>
 
           <div class="col-12 col-md-6 col-xl">
-            <div class="card summary-card">
+            <div class="card card-sm">
               <div class="card-body">
-                <div class="summary-header">
-                  <div class="summary-label">Totale</div>
-                  <div class="summary-icon bg-azure-lt text-azure">
-                    <i class="ti ti-currency-euro"></i>
+                <div class="row align-items-center">
+                  <div class="col-auto">
+                    <span class="bg-purple text-white avatar"><i class="ti ti-currency-euro"></i></span>
+                  </div>
+                  <div class="col">
+                    <div class="fw-semibold text-nowrap" id="totalAmount">0 €</div>
+                    <div class="text-secondary">Totale</div>
                   </div>
                 </div>
-                <div class="summary-value" id="totalAmount">0 €</div>
               </div>
             </div>
           </div>
 
         </div>
 
-        <!-- TABELLA PRESENZE -->
-        <div class="card attendance-card">
+        <!-- Tabella presenze -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Timbrature del mese</h3>
+          </div>
           <div class="table-responsive">
-            <table class="table table-vcenter attendance-table">
+            <table class="table card-table table-vcenter table-attendance">
               <thead>
                 <tr>
                   <th>Giorno</th>
                   <th>Timbrature</th>
                   <th class="text-center">Ore</th>
-                  <th class="text-center">Azioni</th>
+                  <th class="text-center d-print-none">Azioni</th>
                 </tr>
               </thead>
               <tbody id="attendanceBody"></tbody>
@@ -753,182 +235,43 @@
   </div>
 </div>
 
-<!-- DIALOG TIMBRATURA -->
-<dialog id="stampDialog" class="stamp-dialog">
-  <form id="stampForm" novalidate>
-
-    <div class="modal-header">
-      <h5 class="modal-title">
-        <i class="ti ti-clock-plus me-2 text-primary"></i>
-        Timbratura del <span id="stampDate"></span>
-      </h5>
-    </div>
-
-    <div class="modal-body">
-
-      <div class="mb-3">
-        <label class="form-label" for="stampType">Tipo</label>
-        <select class="form-select" id="stampType">
-          <option value="-1">Regolare</option>
-          <option value="251">Smart working</option>
-          <option value="252">Trasferta</option>
-        </select>
-      </div>
-
-      <div class="row g-2 mb-2">
-        <div class="col-6">
-          <label class="form-label" for="stampIn">Ingresso</label>
-          <input class="form-control" type="time" id="stampIn" required>
-        </div>
-
-        <div class="col-6">
-          <label class="form-label" for="stampOut">Uscita</label>
-          <input class="form-control" type="time" id="stampOut" required>
-        </div>
-
-        <div class="col-6">
-          <label class="form-label" for="stampPauseIn">Inizio pausa</label>
-          <input class="form-control" type="time" id="stampPauseIn" required>
-        </div>
-
-        <div class="col-6">
-          <label class="form-label" for="stampPauseOut">Fine pausa</label>
-          <input class="form-control" type="time" id="stampPauseOut" required>
-        </div>
-      </div>
-
-      <label class="form-check mb-3">
-        <input class="form-check-input" type="checkbox" id="stampNoPause">
-        <span class="form-check-label">Senza pausa</span>
-      </label>
-
-      <div class="mb-3">
-        <label class="form-label" for="stampNote">Nota</label>
-        <input class="form-control"
-          type="text"
-          id="stampNote"
-          maxlength="200"
-          autocomplete="off">
-      </div>
-
-      <div class="text-secondary small">
-        Eventuali turni già presenti in questo giorno vengono sostituiti.
-      </div>
-
-      <div id="stampError" class="text-danger mt-2" hidden></div>
-    </div>
-
-    <div class="modal-footer">
-      <button type="button"
-        class="btn btn-link link-secondary"
-        id="stampCancel">
-        Annulla
-      </button>
-
-      <button type="submit" class="btn btn-primary" id="stampSave">
-        <i class="ti ti-device-floppy me-1"></i>
-        Salva
-      </button>
-    </div>
-
-  </form>
-</dialog>
-
-<!-- DIALOG CONFIGURAZIONE -->
-<dialog id="configDialog" class="stamp-dialog">
-  <form id="configForm" novalidate>
-
-    <div class="modal-header">
-      <h5 class="modal-title">
-        <i class="ti ti-settings me-2 text-primary"></i>
-        Credenziali BadgeBox
-      </h5>
-    </div>
-
-    <div class="modal-body">
-
-      <div class="mb-3">
-        <label class="form-label" for="configUser">Username</label>
-        <input class="form-control"
-          type="text"
-          id="configUser"
-          maxlength="200"
-          autocomplete="off"
-          autocapitalize="off"
-          spellcheck="false"
-          required>
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label" for="configPass">Password</label>
-        <input class="form-control"
-          type="password"
-          id="configPass"
-          maxlength="200"
-          autocomplete="new-password"
-          required>
-      </div>
-
-      <div class="text-secondary small">
-        Prima di salvare si prova un accesso a BadgeBox.
-        La password resta sul server e non viene mai mostrata.
-      </div>
-
-      <div id="configError" class="text-danger mt-2" hidden></div>
-    </div>
-
-    <div class="modal-footer">
-      <button type="button"
-        class="btn btn-link link-secondary"
-        id="configCancel">
-        Annulla
-      </button>
-
-      <button type="submit" class="btn btn-primary" id="configSave">
-        <i class="ti ti-device-floppy me-1"></i>
-        Salva
-      </button>
-    </div>
-
-  </form>
-</dialog>
-
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.all.min.js"></script>
 <script>
-  /* ================================================================
-     CONFIGURAZIONE
-  ================================================================ */
-
   const monthNames = [
     "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
     "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"
   ];
 
   const dayNames = [
-    "DOMENICA", "LUNEDÌ", "MARTEDÌ", "MERCOLEDÌ",
-    "GIOVEDÌ", "VENERDÌ", "SABATO"
+    "DOMENICA", "LUNEDÌ", "MARTEDÌ", "MERCOLEDÌ", "GIOVEDÌ", "VENERDÌ", "SABATO"
   ];
 
+  // Soglia ordinaria: 8 ore al giorno.
   const ORDINARY_DAILY_MINUTES = 8 * 60;
 
-  const DEFAULT_TIMES = {
-    checkin: "09:00",
-    pause_in: "13:00",
-    pause_out: "14:00",
-    checkout: "18:00"
-  };
+  // Orari proposti nel form di timbratura.
+  const DEFAULT_TIMES = { checkin: "09:00", pause_in: "13:00", pause_out: "14:00", checkout: "18:00" };
 
+  // Tariffe orarie per l'importo del mese: ore ordinarie e assenze / straordinario.
   const HOURLY_RATE = 10.02397032;
   const OVERTIME_RATE = 4.3625;
 
+  /*
+   * Modalità demo: se la pagina viene aperta come file (doppio clic) oppure con
+   * ?demo nell'indirizzo, usa i dati di esempio qui sotto invece del server.
+   * Con "python3 presenze.py" o con presenze.php i dati arrivano da BadgeBox.
+   */
   const DEMO_MODE =
     location.protocol === "file:" ||
     new URLSearchParams(location.search).has("demo");
 
-  const DEMO_USER = {
-    name: "Mario",
-    surname: "Rossi"
-  };
+  const DEMO_USER = { name: "Mario", surname: "Rossi" };
 
+  /*
+   * Dati di esempio.
+   * Le chiavi seguono il formato anno-mese-giorno.
+   * Il server (presenze.py) restituisce lo stesso formato.
+   */
   const DEMO_ATTENDANCE = {
     "2026-10-1": {
       punches: [
@@ -977,6 +320,7 @@
     }
   };
 
+  // Dati del mese visualizzato (in modalità normale arrivano dal server).
   let attendance = {};
 
   let currentYear = DEMO_MODE ? 2026 : new Date().getFullYear();
@@ -987,14 +331,28 @@
 
   const pad2 = value => String(value).padStart(2, "0");
 
-  const apiUrl = (action, params = {}) =>
-    `presenze.php?${new URLSearchParams({ a: action, ...params })}`;
+  // Indirizzo di un'azione del server: presenze.php, nella stessa cartella della pagina.
+  const apiUrl = (action, params = {}) => `presenze.php?${new URLSearchParams({ a: action, ...params })}`;
 
+  /* ------------------------------------------------------------------------
+   * SweetAlert2 con i pulsanti di Tabler
+   * ---------------------------------------------------------------------- */
 
-  /* ================================================================
-     SWEETALERT2
-  ================================================================ */
+  const swalClasses = (confirm = "btn btn-primary") => ({
+    confirmButton: confirm,
+    cancelButton: "btn btn-link link-secondary",
+    denyButton: "btn btn-outline-secondary"
+  });
 
+  // Dialoghi e conferme: pulsanti Tabler, "Annulla" a sinistra, conferma a destra.
+  const Dialog = Swal.mixin({
+    buttonsStyling: false,
+    reverseButtons: true,
+    cancelButtonText: "Annulla",
+    customClass: swalClasses()
+  });
+
+  // Notifica non bloccante in alto a destra.
   const Toast = Swal.mixin({
     toast: true,
     position: "top-end",
@@ -1003,132 +361,76 @@
     timerProgressBar: true
   });
 
-  function notifySuccess(message) {
-    Toast.fire({
-      icon: "success",
-      title: message
-    });
+  const notify = (message, icon = "success") => Toast.fire({ icon, title: message });
+
+  const errorText = error => (error && error.message) || String(error);
+
+  function showErrorDialog(title, message) {
+    return Dialog.fire({ icon: "error", title, text: message, confirmButtonText: "Chiudi" });
   }
 
-  function notifyError(message, title = "Operazione non riuscita") {
-    Swal.fire({
-      icon: "error",
-      title,
-      text: message,
-      confirmButtonText: "Chiudi"
-    });
-  }
+  /* ------------------------------------------------------------------------
+   * Utilità
+   * ---------------------------------------------------------------------- */
 
-  function notifyInfo(message) {
-    Toast.fire({
-      icon: "info",
-      title: message
-    });
-  }
-
-  async function confirmAction({
-    title,
-    text,
-    confirmText = "Conferma",
-    icon = "warning"
-  }) {
-    const result = await Swal.fire({
-      icon,
-      title,
-      text,
-      showCancelButton: true,
-      confirmButtonText: confirmText,
-      cancelButtonText: "Annulla",
-      reverseButtons: true,
-      focusCancel: true
-    });
-
-    return result.isConfirmed;
-  }
-
-
-  /* ================================================================
-     UTILITÀ
-  ================================================================ */
-
-  const HTML_ESCAPES = {
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
-  };
+  // Protegge le stringhe inserite nell'HTML.
+  const HTML_ESCAPES = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
 
   function escapeHtml(value) {
-    return String(value).replace(
-      /[&<>"']/g,
-      char => HTML_ESCAPES[char]
-    );
+    return String(value).replace(/[&<>"']/g, char => HTML_ESCAPES[char]);
   }
 
-  const REGULAR_TYPE = {
-    label: "Regolare",
-    color: "green"
-  };
+  /*
+   * Tipi di timbratura. Il server manda `type`: l'id_track_voice di BadgeBox
+   * ("-1" regolare, "251" smart working, "252" trasferta) oppure "absence" per le assenze.
+   * Un tipo sconosciuto è trattato come regolare. `color` è un colore di Tabler.
+   */
+  const REGULAR_TYPE = { label: "Regolare", color: "green" };
 
   const PUNCH_TYPES = {
     "-1": REGULAR_TYPE,
-    "251": {
-      label: "Smart working",
-      color: "purple"
-    },
-    "252": {
-      label: "Trasferta",
-      color: "yellow"
-    },
-    "absence": {
-      label: "Assenza",
-      color: "red"
-    }
+    "251": { label: "Smart working", color: "purple" },
+    "252": { label: "Trasferta", color: "yellow" },
+    "absence": { label: "Assenza", color: "red" }
   };
 
-  const OVERTIME_TYPE = {
-    label: "Straordinario",
-    color: "blue"
-  };
+  const OVERTIME_TYPE = { label: "Straordinario", color: "blue" };
 
-  const punchType = punch =>
-    PUNCH_TYPES[String(punch.type)] || REGULAR_TYPE;
+  const punchType = punch => PUNCH_TYPES[String(punch.type)] || REGULAR_TYPE;
 
-  const isAbsence = punch =>
-    String(punch.type) === "absence";
+  // Le assenze non sono ore lavorate.
+  const isAbsence = punch => String(punch.type) === "absence";
 
-  const isTravel = punch =>
-    String(punch.type) === "252";
+  const isTravel = punch => String(punch.type) === "252";
 
+  // Converte HH:MM in minuti (null se l'orario non è valido).
   function timeToMinutes(time) {
     const match = /^(\d{1,2}):(\d{2})$/.exec(time);
-
     const hours = match && Number(match[1]);
     const minutes = match && Number(match[2]);
 
-    return match && hours <= 23 && minutes <= 59
-      ? hours * 60 + minutes
-      : null;
+    return match && hours <= 23 && minutes <= 59 ? hours * 60 + minutes : null;
   }
 
+  // Durata di un intervallo "HH:MM - HH:MM", anche oltre mezzanotte.
   function calculatePunchMinutes(punch) {
-    const match = /^(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})$/
-      .exec(String(punch.time || "").trim());
-
+    const match = /^(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})$/.exec(String(punch.time || "").trim());
     const start = match && timeToMinutes(match[1]);
     const end = match && timeToMinutes(match[2]);
 
-    if (!match || start === null || end === null) {
+    if (start === null || end === null || !match) {
       console.warn("Intervallo non valido:", punch.time);
       return 0;
     }
 
-    return end < start
-      ? end + 24 * 60 - start
-      : end - start;
+    return end < start ? end + 24 * 60 - start : end - start;
   }
 
+  /*
+   * Riepilogo di una giornata, calcolato una sola volta:
+   * ore ordinarie (max 8), straordinario, assenze, timbratura valida più lunga
+   * (per il pallino blu dello straordinario) e se ci sono turni / trasferte.
+   */
   function summarizeDay(punches) {
     let total = 0;
     let absence = 0;
@@ -1143,10 +445,7 @@
         total += minutes;
 
         if (!longest || minutes > longest.minutes) {
-          longest = {
-            punch,
-            minutes
-          };
+          longest = { punch, minutes };
         }
       }
     }
@@ -1161,49 +460,40 @@
     };
   }
 
-  const formatHours = minutes =>
-    `${Math.floor(minutes / 60)}h ${pad2(minutes % 60)}m`;
+  // Formatta i minuti come "8h 00m".
+  const formatHours = minutes => `${Math.floor(minutes / 60)}h ${pad2(minutes % 60)}m`;
 
+  // Badge della giornata (tutti i tipi tranne "Regolare", più lo straordinario).
   function generateTags(punches, overtimeMinutes) {
-    const types = new Set(
-      punches
-        .map(punchType)
-        .filter(type => type !== REGULAR_TYPE)
-    );
+    const types = new Set(punches.map(punchType).filter(type => type !== REGULAR_TYPE));
 
     if (overtimeMinutes > 0) {
       types.add(OVERTIME_TYPE);
     }
 
     return [...types].map(type =>
-      `<span class="tag tag-${type.color}">${escapeHtml(type.label)}</span>`
+      `<span class="badge bg-${type.color}-lt">${escapeHtml(type.label)}</span>`
     ).join("");
   }
 
-  const toIso = date =>
-    `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+  const toIso = date => `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+  const toItalianDate = iso => iso.split("-").reverse().join("/");
 
-  const toItalianDate = iso =>
-    iso.split("-").reverse().join("/");
-
-
-  /* ================================================================
-     CALENDARIO E RIEPILOGO
-  ================================================================ */
+  /* ------------------------------------------------------------------------
+   * Tabella e riepilogo del mese
+   * ---------------------------------------------------------------------- */
 
   function updateToolbar() {
     el("monthTitle").textContent = monthNames[currentMonth];
     el("yearValue").textContent = currentYear;
   }
 
-  const EMPTY_CELL = '<span class="empty-day">—</span>';
+  const EMPTY_CELL = '<span class="text-secondary">—</span>';
 
   function dayRow(date, punchesHtml, hoursHtml, actionsHtml) {
     return `
       <tr>
-        <td class="day-cell">
-          ${dayNames[date.getDay()]} ${pad2(date.getDate())}
-        </td>
+        <td class="day-cell fw-semibold">${dayNames[date.getDay()]} ${pad2(date.getDate())}</td>
         <td class="punches-cell">${punchesHtml}</td>
         <td class="hours-cell">${hoursHtml}</td>
         ${actionsHtml}
@@ -1212,85 +502,47 @@
 
   function punchesHtml(punches, day) {
     return punches.map(punch => {
-      const showOvertimeDot =
-        day.overtime > 0 && day.longest === punch;
+      const showOvertimeDot = day.overtime > 0 && day.longest === punch;
 
       return `
         <div class="punch">
-          <span class="punch-dot dot-${punchType(punch).color}"></span>
-          ${showOvertimeDot
-            ? '<span class="punch-dot dot-blue" title="Straordinario"></span>'
-            : ""}
+          <span class="status-dot status-${punchType(punch).color}"></span>
           <span>${escapeHtml(punch.time || "")}</span>
+          ${showOvertimeDot ? '<span class="status-dot status-blue" title="Straordinario"></span>' : ""}
         </div>`;
     }).join("");
   }
 
   function hoursHtml(day) {
     return `
-      <div class="hours-total">${formatHours(day.ordinary)}</div>
-
-      ${day.overtime > 0
-        ? `<div class="hours-total hours-overtime">
-            + ${formatHours(day.overtime)}
-          </div>`
-        : ""}
-
-      ${day.absence > 0
-        ? `<div class="hours-total" style="color:#d63939">
-            ${formatHours(day.absence)}
-          </div>`
-        : ""}
-    `;
+      <div>${formatHours(day.ordinary)}</div>
+      ${day.overtime > 0 ? `<div class="text-blue">+ ${formatHours(day.overtime)}</div>` : ""}
+      ${day.absence > 0 ? `<div class="text-red">${formatHours(day.absence)}</div>` : ""}`;
   }
 
   function renderCalendar() {
     updateToolbar();
 
-    const daysInMonth =
-      new Date(currentYear, currentMonth + 1, 0).getDate();
-
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     const week = currentWeek();
-
-    const totals = {
-      worked: 0,
-      overtime: 0,
-      absence: 0,
-      travelDays: 0
-    };
-
+    const totals = { worked: 0, overtime: 0, absence: 0, travelDays: 0 };
     const rows = [];
 
     for (let dayOfMonth = 1; dayOfMonth <= daysInMonth; dayOfMonth++) {
       const date = new Date(currentYear, currentMonth, dayOfMonth);
+      const record = attendance[`${currentYear}-${currentMonth + 1}-${dayOfMonth}`];
 
-      const record =
-        attendance[`${currentYear}-${currentMonth + 1}-${dayOfMonth}`];
-
+      // La riga del timesheet va dopo l'ultimo giorno del periodo (domenica o fine mese).
       const iso = toIso(date);
       const endsWeek = iso === week.tsEnd;
 
       if (!record) {
-        rows.push(
-          dayRow(
-            date,
-            EMPTY_CELL,
-            EMPTY_CELL,
-            actionCell(date, false, week)
-          )
-        );
-
-        if (endsWeek) {
-          rows.push(weekRow(week));
-        }
-
+        rows.push(dayRow(date, EMPTY_CELL, EMPTY_CELL, actionCell(date, false, week)));
+        if (endsWeek) rows.push(weekRow(week));
         continue;
       }
 
-      const punches = Array.isArray(record.punches)
-        ? record.punches
-        : [];
-
+      const punches = Array.isArray(record.punches) ? record.punches : [];
       const day = summarizeDay(punches);
       const tags = generateTags(punches, day.overtime);
 
@@ -1300,26 +552,19 @@
       totals.travelDays += day.isTravelDay ? 1 : 0;
 
       const notes = record.note || tags ? `
-        <div class="day-notes">
-          ${tags ? `<div class="day-tags">${tags}</div>` : ""}
+        <div class="mt-2 text-secondary small">
+          ${tags ? `<div class="d-flex flex-wrap gap-1 mb-1">${tags}</div>` : ""}
           ${record.note ? `<div>${escapeHtml(record.note)}</div>` : ""}
-        </div>
-      ` : "";
+        </div>` : "";
 
-      rows.push(
-        dayRow(
-          date,
-          `<div class="punch-grid">
-            ${punchesHtml(punches, day)}
-          </div>${notes}`,
-          hoursHtml(day),
-          actionCell(date, day.hasShifts, week)
-        )
-      );
+      rows.push(dayRow(
+        date,
+        `<div class="punch-grid">${punchesHtml(punches, day)}</div>${notes}`,
+        hoursHtml(day),
+        actionCell(date, day.hasShifts, week)
+      ));
 
-      if (endsWeek) {
-        rows.push(weekRow(week));
-      }
+      if (endsWeek) rows.push(weekRow(week));
     }
 
     body.innerHTML = rows.join("");
@@ -1340,13 +585,7 @@
     });
   }
 
-  const SUMMARY_IDS = [
-    "workedHours",
-    "absenceHours",
-    "overtimeHours",
-    "travelDays",
-    "totalAmount"
-  ];
+  const SUMMARY_IDS = ["workedHours", "absenceHours", "overtimeHours", "travelDays", "totalAmount"];
 
   function setSummary(values) {
     SUMMARY_IDS.forEach(id => {
@@ -1354,22 +593,19 @@
     });
   }
 
-
-  /* ================================================================
-     COMUNICAZIONE SERVER
-  ================================================================ */
+  /* ------------------------------------------------------------------------
+   * Lettura dei dati dal server (presenze.php)
+   * ---------------------------------------------------------------------- */
 
   let loadToken = 0;
 
+  // Fetch che restituisce il JSON e solleva un errore leggibile se la risposta non è ok.
   async function fetchJson(url, options) {
     const response = await fetch(url, options);
-
     const data = await response.json().catch(() => null);
 
     if (!response.ok) {
-      const error = new Error(
-        (data && data.error) || `errore ${response.status}`
-      );
+      const error = new Error((data && data.error) || `errore ${response.status}`);
 
       error.status = response.status;
       throw error;
@@ -1378,53 +614,39 @@
     return data;
   }
 
-  const postJson = (url, payload) =>
-    fetchJson(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(payload)
-    });
+  const postJson = (url, payload) => fetchJson(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
 
   function setUser(user) {
-    const name = user && user.name
-      ? String(user.name)
-      : "";
+    const name = user && user.name ? String(user.name) : "";
+    const surname = user && user.surname ? String(user.surname) : "";
 
-    const surname = user && user.surname
-      ? String(user.surname)
-      : "";
-
-    el("userName").textContent =
-      `${name} ${surname}`.trim();
-
-    el("userInitials").textContent =
-      ((name[0] || "") + (surname[0] || "")).toUpperCase();
+    el("userName").textContent = `${name} ${surname}`.trim();
+    el("userInitials").textContent = ((name[0] || "") + (surname[0] || "")).toUpperCase();
   }
 
   function showMessageRow(html) {
     body.innerHTML = `
       <tr>
-        <td colspan="4" class="text-center text-secondary py-5">
-          ${html}
-        </td>
-      </tr>
-    `;
+        <td colspan="4" class="text-center text-secondary py-5">${html}</td>
+      </tr>`;
   }
 
+  // Errore di lettura: avviso di Tabler in cima alla pagina.
   function showError(message, prefix = "Impossibile leggere i dati") {
-    el("errorBox").innerHTML = "";
-
-    notifyError(message, prefix);
+    el("errorBox").innerHTML = `
+      <div class="alert alert-danger" role="alert">
+        <div class="d-flex">
+          <div><i class="ti ti-alert-circle alert-icon"></i></div>
+          <div>${escapeHtml(prefix)}: ${escapeHtml(message)}</div>
+        </div>
+      </div>`;
   }
 
-  function showSuccess(message) {
-    el("errorBox").innerHTML = "";
-
-    notifySuccess(message);
-  }
-
+  // Carica il mese selezionato e ridisegna la pagina.
   async function loadMonth() {
     const token = ++loadToken;
 
@@ -1433,41 +655,35 @@
 
     if (DEMO_MODE) {
       attendance = DEMO_ATTENDANCE;
-
       setUser(DEMO_USER);
       renderCalendar();
-
       return;
     }
 
-    showMessageRow(`
-      <span class="spinner-border spinner-border-sm me-2"></span>
-      Caricamento…
-    `);
+    showMessageRow('<span class="spinner-border spinner-border-sm me-2"></span>Caricamento…');
 
     try {
       const data = await fetchJson(
-        apiUrl("dati", {
-          mese: `${currentYear}-${pad2(currentMonth + 1)}`
-        }),
-        {
-          cache: "no-store"
-        }
+        apiUrl("dati", { mese: `${currentYear}-${pad2(currentMonth + 1)}` }),
+        { cache: "no-store" }
       );
 
-      if (token !== loadToken) return;
+      if (token !== loadToken) {
+        return;
+      }
 
       attendance = data.attendance || {};
-
       setUser(data.user);
       renderCalendar();
-
     } catch (error) {
-      if (token !== loadToken) return;
+      if (token !== loadToken) {
+        return;
+      }
 
       attendance = {};
       setSummary(null);
 
+      // 409: credenziali BadgeBox non ancora salvate, si apre il form di configurazione.
       if (error.status === 409) {
         showMessageRow("Credenziali BadgeBox non configurate");
         openConfigDialog();
@@ -1475,28 +691,16 @@
       }
 
       showMessageRow("Dati non disponibili");
-
-      showError(
-        error.message || String(error)
-      );
+      showError(errorText(error));
     }
   }
 
-
-  /* ================================================================
-     NAVIGAZIONE
-  ================================================================ */
-
+  // Navigazione mensile e annuale.
   function goToMonth(delta) {
-    const target = new Date(
-      currentYear,
-      currentMonth + delta,
-      1
-    );
+    const target = new Date(currentYear, currentMonth + delta, 1);
 
     currentYear = target.getFullYear();
     currentMonth = target.getMonth();
-
     loadMonth();
   }
 
@@ -1507,257 +711,254 @@
 
   el("prevMonth").addEventListener("click", () => goToMonth(-1));
   el("nextMonth").addEventListener("click", () => goToMonth(1));
-
-  el("prevYear").addEventListener("click", () => goToYear(1));
-  el("nextYear").addEventListener("click", () => goToYear(-1));
+  el("prevYear").addEventListener("click", () => goToYear(-1));
+  el("nextYear").addEventListener("click", () => goToYear(1));
 
   el("todayBtn").addEventListener("click", () => {
     const today = new Date();
 
     currentYear = today.getFullYear();
     currentMonth = today.getMonth();
-
     loadMonth();
   });
 
+  /* ------------------------------------------------------------------------
+   * Timbra o elimina un giorno (il server inoltra la richiesta a BadgeBox)
+   * ---------------------------------------------------------------------- */
 
-  /* ================================================================
-     TIMBRATURE E TIMESHEET
-  ================================================================ */
-
-  const stampDialog = el("stampDialog");
-  const stampForm = el("stampForm");
-
-  let stampDay = "";
-
+  // Settimana corrente (lunedì-domenica) e oggi, nel formato YYYY-MM-DD.
   function currentWeek() {
     const now = new Date();
+    const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7));
+    const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
 
-    const monday = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate() - ((now.getDay() + 6) % 7)
-    );
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-    const sunday = new Date(
-      monday.getFullYear(),
-      monday.getMonth(),
-      monday.getDate() + 6
-    );
+    // Periodo del timesheet: lunedì-domenica, ma senza uscire dal mese di oggi (fine mese a metà settimana).
+    const tsStart = toIso(monday) > toIso(monthStart) ? toIso(monday) : toIso(monthStart);
+    const tsEnd = toIso(sunday) < toIso(monthEnd) ? toIso(sunday) : toIso(monthEnd);
 
-    const monthStart = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      1
-    );
-
-    const monthEnd = new Date(
-      now.getFullYear(),
-      now.getMonth() + 1,
-      0
-    );
-
-    const tsStart =
-      toIso(monday) > toIso(monthStart)
-        ? toIso(monday)
-        : toIso(monthStart);
-
-    const tsEnd =
-      toIso(sunday) < toIso(monthEnd)
-        ? toIso(sunday)
-        : toIso(monthEnd);
-
-    return {
-      start: toIso(monday),
-      end: toIso(sunday),
-      tsStart,
-      tsEnd,
-      today: toIso(now)
-    };
+    return { start: toIso(monday), end: toIso(sunday), tsStart, tsEnd, today: toIso(now) };
   }
 
-  const shortDate = iso =>
-    toItalianDate(iso).slice(0, 5);
+  const shortDate = iso => toItalianDate(iso).slice(0, 5);
 
+  // Riga con il bottone che invia il timesheet della settimana corrente. Non in demo.
   function weekRow(week) {
-    if (DEMO_MODE) return "";
+    if (DEMO_MODE) {
+      return "";
+    }
 
     return `
-      <tr class="week-row d-print-none">
-        <td colspan="4">
-          <div class="week-row-inner">
-            <span>
-              <i class="ti ti-calendar-week me-1"></i>
-              Timesheet: ${shortDate(week.tsStart)}
-              – ${shortDate(week.tsEnd)}
+      <tr class="d-print-none">
+        <td colspan="4" class="bg-blue-lt">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <span class="fw-semibold">
+              <i class="ti ti-calendar-week me-1"></i>Timesheet: ${shortDate(week.tsStart)} – ${shortDate(week.tsEnd)}
             </span>
-
-            <button type="button"
-              class="btn btn-sm btn-primary act-timesheet"
-              data-from="${week.tsStart}"
-              data-to="${week.tsEnd}">
-              <i class="ti ti-send me-1"></i>
-              Invia timesheet
+            <button type="button" class="btn btn-sm btn-primary act-timesheet"
+              data-from="${week.tsStart}" data-to="${week.tsEnd}">
+              <i class="ti ti-send me-1"></i>Invia timesheet
             </button>
           </div>
         </td>
-      </tr>
-    `;
+      </tr>`;
   }
 
   async function sendTimesheet(button) {
-    const label =
-      `${shortDate(button.dataset.from)} – ${shortDate(button.dataset.to)}`;
+    const label = `${shortDate(button.dataset.from)} – ${shortDate(button.dataset.to)}`;
 
-    const confirmed = await confirmAction({
+    const answer = await Dialog.fire({
+      icon: "question",
       title: "Inviare il timesheet?",
-      text: `Confermi l'invio del periodo ${label}?`,
-      confirmText: "Sì, invia",
-      icon: "question"
+      text: `Periodo: ${label}`,
+      showCancelButton: true,
+      confirmButtonText: "Invia",
+      focusCancel: true
     });
 
-    if (!confirmed) return;
+    if (!answer.isConfirmed) {
+      return;
+    }
 
     button.disabled = true;
     el("errorBox").innerHTML = "";
 
     try {
-      const result = await postJson(
-        apiUrl("timesheet"),
-        {}
-      );
+      const result = await postJson(apiUrl("timesheet"), {});
 
-      Swal.fire({
-        icon: "success",
-        title: "Timesheet inviato!",
-        text: result.messaggio || "Il timesheet è stato inviato correttamente.",
-        confirmButtonText: "Perfetto"
-      });
-
+      notify(result.messaggio || "Timesheet inviato.");
     } catch (error) {
-      notifyError(
-        error.message || String(error),
-        "Invio timesheet non riuscito"
-      );
-
+      showErrorDialog("Invio timesheet non riuscito", errorText(error));
     } finally {
       button.disabled = false;
     }
   }
 
+  /*
+   * Cella delle azioni, solo per i giorni della settimana corrente:
+   * + (timbra) fino a oggi compreso, non si può anticipare; x (elimina i turni) se il giorno ne ha.
+   * Fuori dalla settimana corrente, o in modalità demo, resta vuota.
+   */
   function actionCell(date, hasShifts, week) {
     const iso = toIso(date);
     const canAdd = iso <= week.today;
 
-    if (
-      DEMO_MODE ||
-      iso < week.start ||
-      iso > week.end ||
-      (!canAdd && !hasShifts)
-    ) {
+    if (DEMO_MODE || iso < week.start || iso > week.end || (!canAdd && !hasShifts)) {
       return '<td class="actions-cell"></td>';
     }
 
     return `
       <td class="actions-cell d-print-none">
-
-        ${canAdd ? `
-          <button type="button"
-            class="btn btn-icon btn-sm btn-outline-primary act-add"
-            data-date="${iso}"
-            title="Timbra questo giorno"
-            aria-label="Timbra">
+        <div class="btn-list flex-nowrap justify-content-center">
+          ${canAdd ? `
+          <button type="button" class="btn btn-icon btn-sm btn-outline-primary act-add"
+            data-date="${iso}" title="Timbra questo giorno" aria-label="Timbra">
             <i class="ti ti-plus"></i>
-          </button>
-        ` : ""}
-
-        ${hasShifts ? `
-          <button type="button"
-            class="btn btn-icon btn-sm btn-outline-danger act-del"
-            data-date="${iso}"
-            title="Elimina i turni di questo giorno"
-            aria-label="Elimina">
-            <i class="ti ti-x"></i>
-          </button>
-        ` : ""}
-
-      </td>
-    `;
+          </button>` : ""}
+          ${hasShifts ? `
+          <button type="button" class="btn btn-icon btn-sm btn-outline-danger act-del"
+            data-date="${iso}" title="Elimina i turni di questo giorno" aria-label="Elimina">
+            <i class="ti ti-trash"></i>
+          </button>` : ""}
+        </div>
+      </td>`;
   }
+
+  // Form di timbratura mostrato dentro SweetAlert2.
+  const STAMP_FORM_HTML = `
+    <div class="text-start">
+      <div class="mb-3">
+        <label class="form-label" for="stampType">Tipo</label>
+        <select class="form-select" id="stampType">
+          <option value="-1">Regolare</option>
+          <option value="251">Smart working</option>
+          <option value="252">Trasferta</option>
+        </select>
+      </div>
+
+      <div class="row g-2 mb-2">
+        <div class="col-6">
+          <label class="form-label" for="stampIn">Ingresso</label>
+          <input class="form-control" type="time" id="stampIn">
+        </div>
+        <div class="col-6">
+          <label class="form-label" for="stampOut">Uscita</label>
+          <input class="form-control" type="time" id="stampOut">
+        </div>
+        <div class="col-6">
+          <label class="form-label" for="stampPauseIn">Inizio pausa</label>
+          <input class="form-control" type="time" id="stampPauseIn">
+        </div>
+        <div class="col-6">
+          <label class="form-label" for="stampPauseOut">Fine pausa</label>
+          <input class="form-control" type="time" id="stampPauseOut">
+        </div>
+      </div>
+
+      <label class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" id="stampNoPause">
+        <span class="form-check-label">Senza pausa</span>
+      </label>
+
+      <div class="mb-3">
+        <label class="form-label" for="stampNote">Nota</label>
+        <input class="form-control" type="text" id="stampNote" maxlength="200" autocomplete="off">
+      </div>
+
+      <div class="text-secondary small">
+        Eventuali turni già presenti in questo giorno vengono sostituiti.
+      </div>
+    </div>`;
 
   function setNoPause(noPause) {
     el("stampNoPause").checked = noPause;
-
     el("stampPauseIn").disabled = noPause;
     el("stampPauseOut").disabled = noPause;
   }
 
-  function setBusy(busy) {
-    el("stampSave").disabled = busy;
-    el("stampCancel").disabled = busy;
-  }
+  async function openStampDialog(iso) {
+    const result = await Dialog.fire({
+      title: `Timbratura del ${toItalianDate(iso)}`,
+      html: STAMP_FORM_HTML,
+      showCancelButton: true,
+      confirmButtonText: "Salva",
+      focusConfirm: false,
+      showLoaderOnConfirm: true,
+      allowOutsideClick: () => !Swal.isLoading(),
 
-  function showStampError(message) {
-    const box = el("stampError");
+      didOpen: () => {
+        el("stampIn").value = DEFAULT_TIMES.checkin;
+        el("stampPauseIn").value = DEFAULT_TIMES.pause_in;
+        el("stampPauseOut").value = DEFAULT_TIMES.pause_out;
+        el("stampOut").value = DEFAULT_TIMES.checkout;
+        setNoPause(false);
+        el("stampNoPause").addEventListener("change", event => setNoPause(event.target.checked));
+      },
 
-    box.textContent = message || "";
-    box.hidden = !message;
-  }
+      preConfirm: async () => {
+        const checkin = el("stampIn").value;
+        const checkout = el("stampOut").value;
+        const noPause = el("stampNoPause").checked;
+        const pauseIn = el("stampPauseIn").value;
+        const pauseOut = el("stampPauseOut").value;
 
-  function openStampDialog(iso) {
-    stampDay = iso;
+        if (!checkin || !checkout || (!noPause && (!pauseIn || !pauseOut))) {
+          Swal.showValidationMessage("Compila tutti gli orari.");
+          return;
+        }
 
-    el("stampDate").textContent = toItalianDate(iso);
-    el("stampType").value = "-1";
+        const fasce = noPause
+          ? [`${checkin}-${checkout}`]
+          : [`${checkin}-${pauseIn}`, `${pauseOut}-${checkout}`];
 
-    el("stampIn").value = DEFAULT_TIMES.checkin;
-    el("stampPauseIn").value = DEFAULT_TIMES.pause_in;
-    el("stampPauseOut").value = DEFAULT_TIMES.pause_out;
-    el("stampOut").value = DEFAULT_TIMES.checkout;
+        try {
+          return await postJson(apiUrl("timbra"), {
+            data: iso,
+            tipo: el("stampType").value,
+            fasce,
+            nota: el("stampNote").value.trim()
+          });
+        } catch (error) {
+          Swal.showValidationMessage(escapeHtml(errorText(error)));
+        }
+      }
+    });
 
-    el("stampNote").value = "";
-
-    setNoPause(false);
-    showStampError("");
-    setBusy(false);
-
-    stampDialog.showModal();
+    if (result.isConfirmed) {
+      notify((result.value && result.value.messaggio) || "Timbratura inviata.");
+      loadMonth();
+    }
   }
 
   async function deleteDay(button) {
     const iso = button.dataset.date;
 
-    const confirmed = await confirmAction({
-      title: "Eliminare le timbrature?",
+    const answer = await Dialog.fire({
+      icon: "warning",
+      title: "Eliminare i turni?",
       text: `Verranno eliminati tutti i turni del ${toItalianDate(iso)}.`,
-      confirmText: "Sì, elimina",
-      icon: "warning"
+      showCancelButton: true,
+      confirmButtonText: "Elimina",
+      focusCancel: true,
+      customClass: swalClasses("btn btn-danger")
     });
 
-    if (!confirmed) return;
+    if (!answer.isConfirmed) {
+      return;
+    }
 
     button.disabled = true;
     el("errorBox").innerHTML = "";
 
     try {
-      await postJson(
-        apiUrl("elimina-giorno"),
-        {
-          data: iso
-        }
-      );
-
-      notifySuccess("Timbrature eliminate correttamente.");
-
-      await loadMonth();
-
+      await postJson(apiUrl("elimina-giorno"), { data: iso });
+      notify(`Turni del ${toItalianDate(iso)} eliminati.`);
+      loadMonth();
     } catch (error) {
       button.disabled = false;
-
-      notifyError(
-        error.message || String(error),
-        "Eliminazione non riuscita"
-      );
+      showErrorDialog("Eliminazione non riuscita", errorText(error));
     }
   }
 
@@ -1775,167 +976,87 @@
     }
   });
 
-  el("stampNoPause").addEventListener("change", event => {
-    setNoPause(event.target.checked);
-  });
+  /* ------------------------------------------------------------------------
+   * Credenziali BadgeBox (salvate sul server, la password non torna mai al browser)
+   * ---------------------------------------------------------------------- */
 
-  el("stampCancel").addEventListener("click", () => {
-    stampDialog.close();
-  });
+  const CONFIG_FORM_HTML = `
+    <div class="text-start">
+      <div class="mb-3">
+        <label class="form-label" for="configUser">Username</label>
+        <input class="form-control" type="text" id="configUser" maxlength="200"
+          autocomplete="off" autocapitalize="off" spellcheck="false">
+      </div>
 
-  stampForm.addEventListener("submit", async event => {
-    event.preventDefault();
+      <div class="mb-3">
+        <label class="form-label" for="configPass">Password</label>
+        <input class="form-control" type="password" id="configPass" maxlength="200"
+          autocomplete="new-password">
+      </div>
 
-    if (!stampForm.reportValidity()) {
+      <div class="text-secondary small">
+        Prima di salvare si prova un accesso a BadgeBox. La password resta sul server e non viene mai mostrata.
+      </div>
+    </div>`;
+
+  async function openConfigDialog() {
+    if (Swal.isVisible()) {
       return;
     }
 
-    const checkin = el("stampIn").value;
-    const checkout = el("stampOut").value;
+    let configured = false;
 
-    const pauseIn = el("stampPauseIn").value;
-    const pauseOut = el("stampPauseOut").value;
+    const result = await Dialog.fire({
+      title: "Credenziali BadgeBox",
+      html: CONFIG_FORM_HTML,
+      showCancelButton: true,
+      confirmButtonText: "Salva",
+      focusConfirm: false,
+      showLoaderOnConfirm: true,
+      allowOutsideClick: () => !Swal.isLoading(),
 
-    const noPause = el("stampNoPause").checked;
+      didOpen: async () => {
+        try {
+          const status = await fetchJson(apiUrl("config"), { cache: "no-store" });
 
-    const fasce = noPause
-      ? [`${checkin}-${checkout}`]
-      : [
-          `${checkin}-${pauseIn}`,
-          `${pauseOut}-${checkout}`
-        ];
+          el("configUser").value = status.username || "";
 
-    setBusy(true);
-    showStampError("");
-
-    try {
-      await postJson(
-        apiUrl("timbra"),
-        {
-          data: stampDay,
-          tipo: el("stampType").value,
-          fasce,
-          nota: el("stampNote").value.trim()
+          // Con credenziali già salvate la password si può lasciare vuota (resta quella attuale).
+          configured = Boolean(status.configurata);
+          el("configPass").placeholder = configured ? "Lascia vuota per non cambiarla" : "";
+        } catch (error) {
+          Swal.showValidationMessage(escapeHtml(errorText(error)));
         }
-      );
+      },
 
-      stampDialog.close();
+      preConfirm: async () => {
+        const username = el("configUser").value.trim();
+        const password = el("configPass").value;
 
-      notifySuccess("Timbratura salvata correttamente.");
+        if (!username || (!configured && !password)) {
+          Swal.showValidationMessage("Inserisci username e password.");
+          return;
+        }
 
+        try {
+          return await postJson(apiUrl("config-salva"), { username, password });
+        } catch (error) {
+          Swal.showValidationMessage(escapeHtml(errorText(error)));
+        }
+      }
+    });
+
+    if (result.isConfirmed) {
+      notify("Credenziali salvate.");
       loadMonth();
-
-    } catch (error) {
-      showStampError(error.message || String(error));
-      setBusy(false);
-    }
-  });
-
-
-  /* ================================================================
-     CONFIGURAZIONE BADGEBOX
-  ================================================================ */
-
-  const configDialog = el("configDialog");
-  const configForm = el("configForm");
-
-  function showConfigError(message) {
-    const box = el("configError");
-
-    box.textContent = message || "";
-    box.hidden = !message;
-  }
-
-  function setConfigBusy(busy) {
-    el("configSave").disabled = busy;
-    el("configCancel").disabled = busy;
-  }
-
-  async function openConfigDialog() {
-    el("configUser").value = "";
-    el("configPass").value = "";
-
-    el("configPass").required = true;
-    el("configPass").placeholder = "";
-
-    showConfigError("");
-    setConfigBusy(false);
-
-    if (!configDialog.open) {
-      configDialog.showModal();
-    }
-
-    try {
-      const status = await fetchJson(
-        apiUrl("config"),
-        {
-          cache: "no-store"
-        }
-      );
-
-      el("configUser").value = status.username || "";
-
-      el("configPass").required = !status.configurata;
-
-      el("configPass").placeholder =
-        status.configurata
-          ? "Lascia vuota per non cambiarla"
-          : "";
-
-    } catch (error) {
-      showConfigError(error.message || String(error));
     }
   }
 
   el("configBtn").addEventListener("click", openConfigDialog);
-
-  el("configCancel").addEventListener("click", () => {
-    configDialog.close();
-  });
-
-  configForm.addEventListener("submit", async event => {
-    event.preventDefault();
-
-    if (!configForm.reportValidity()) {
-      return;
-    }
-
-    setConfigBusy(true);
-    showConfigError("");
-
-    try {
-      await postJson(
-        apiUrl("config-salva"),
-        {
-          username: el("configUser").value.trim(),
-          password: el("configPass").value
-        }
-      );
-
-      el("configPass").value = "";
-
-      configDialog.close();
-
-      notifySuccess("Credenziali BadgeBox aggiornate.");
-
-      loadMonth();
-
-    } catch (error) {
-      showConfigError(error.message || String(error));
-
-      setConfigBusy(false);
-    }
-  });
-
-
-  /* ================================================================
-     INIZIALIZZAZIONE
-  ================================================================ */
-
   el("configBtn").hidden = DEMO_MODE;
 
+  // Primo caricamento.
   loadMonth();
-
 </script>
 </body>
 </html>
