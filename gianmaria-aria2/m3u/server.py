@@ -7,7 +7,6 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 OUT_DIR = os.environ.get('OUT_DIR', '/downloads')
 MAX_JOBS = int(os.environ.get('MAX_JOBS', '3'))
 PORT = int(os.environ.get('PORT', '8080'))
-WAIT_TIME = int(os.environ.get('WAIT_TIME', '5'))
 # ffmpeg può aprire solo questi protocolli: niente file locali
 WL = 'http,https,tcp,tls,crypto'
 FINISHED = ('done', 'error', 'skipped', 'cancelled')
@@ -61,7 +60,7 @@ def parse_playlist(text):
 
 
 def build_cmd(p, tmp):
-    cmd = ['ffmpeg', '-hide_banner', '-loglevel', 'error', '-nostdin', '-n', '-nostats', '-progress', 'pipe:1']
+    cmd = ['ffmpeg', '-hide_banner', '-nostdin', '-n', '-nostats', '-progress', 'pipe:1']
     inputs = [p['video']]
     maps = ['-map', '0:v:0']
     codecs = ['-c:v', 'copy']
@@ -101,7 +100,7 @@ def build_cmd(p, tmp):
 
 
 def public(j):
-    return {k: j[k] for k in ('id', 'name', 'status', 'percent', 'eta', 'elapsed', 'message')}
+    return {k: j[k] for k in ('id', 'name', 'status', 'percent', 'eta', 'message')}
 
 
 def fail(job, msg):
@@ -158,24 +157,35 @@ def run_job(job):
             errbuf.append(l.strip())
     threading.Thread(target=drain, daemon=True).start()
 
-    last_t, last_out, speed = time.time(), 0.0, 0.0   # speed = secondi di video al secondo
+    samples = collections.deque()   # (istante, secondi di video scaricati) ultimi ~60 s
+    smooth = None                   # (eta stimato, istante)
     for line in proc.stdout:
         m = re.match(r'out_time_(?:us|ms)=(\d+)', line)
         if not m:
             continue
-        out = int(m.group(1)) / 1000000.0
+        done = int(m.group(1)) / 1000000.0
         now = time.time()
-        dt = now - last_t
-        if dt >= 1:
-            inst = (out - last_out) / dt
-            speed = inst if speed == 0 else (speed * 8 + inst * 2) / 10
-            last_t, last_out = now, out
-        pct = max(0, min(100, int(100 * out / duration)))
-        eta = int(max(0.0, duration - out) / speed) if speed > 0 else -1
+        pct = max(0, min(100, int(100 * done / duration)))
+        samples.append((now, done))
+        while len(samples) > 2 and now - samples[0][0] > 60:
+            samples.popleft()
+        elapsed = now - start
+        eta = -1
+        if elapsed >= 5 and done > 0:
+            overall = done / elapsed
+            span = now - samples[0][0]
+            window = (done - samples[0][1]) / span if span >= 3 else overall
+            rate = 0.5 * window + 0.5 * overall
+            if rate > 0:
+                raw = max(0.0, (duration - done) / rate)
+                if smooth:
+                    expected = smooth[0] - (now - smooth[1])   # conto alla rovescia naturale
+                    raw = 0.9 * expected + 0.1 * raw if expected > 0 else raw
+                smooth = (raw, now)
+                eta = int(raw)
         with lock:
             job['percent'] = pct
             job['eta'] = eta
-            job['elapsed'] = int(now - start)
     rc = proc.wait()
     job['proc'] = None
 
@@ -199,8 +209,7 @@ def run_job(job):
     job['content'] = ''
 
 
-def worker(slot):
-    time.sleep(slot * WAIT_TIME)
+def worker():
     while True:
         job = pending.get()
         try:
@@ -246,7 +255,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self.reply({'error': 'Non sembra una playlist .m3u'}, 400)
             job = {'id': uuid.uuid4().hex[:10], 'name': safe_name(d.get('name', 'video')),
                    'content': content, 'status': 'queued', 'percent': 0, 'eta': -1,
-                   'message': '', 'elapsed': 0, 'cancel': False, 'proc': None}
+                   'message': '', 'cancel': False, 'proc': None}
             with lock:
                 jobs[job['id']] = job
                 while len(jobs) > 100:
@@ -283,6 +292,6 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == '__main__':
-    for slot in range(MAX_JOBS):
-        threading.Thread(target=worker, args=(slot,), daemon=True).start()
+    for _ in range(MAX_JOBS):
+        threading.Thread(target=worker, daemon=True).start()
     ThreadingHTTPServer(('0.0.0.0', PORT), Handler).serve_forever()

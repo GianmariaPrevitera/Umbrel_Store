@@ -168,11 +168,6 @@ textarea::placeholder{color:var(--muted)}
     var h = Math.floor(sec/3600), m = Math.floor(sec%3600/60), s = Math.floor(sec%60);
     return h ? h+'h '+m+'m' : m ? m+'m '+s+'s' : s+'s';
   }
-  function fmtHms(n){
-    n = Math.max(0, Math.floor(Number(n) || 0));
-    function p(x){ return (x < 10 ? '0' : '') + x; }
-    return p(Math.floor(n/3600)) + ':' + p(Math.floor(n%3600/60)) + ':' + p(n%60);
-  }
   function nameOf(d){
     if(d.bittorrent && d.bittorrent.info && d.bittorrent.info.name) return d.bittorrent.info.name;
     var f = d.files && d.files[0];
@@ -230,7 +225,7 @@ textarea::placeholder{color:var(--muted)}
         var fin = ['done','error','skipped','cancelled'].indexOf(j.status) >= 0;
         var cls = j.status === 'done' ? 'done' : j.status === 'error' ? 'err' : (j.status === 'skipped' || j.status === 'cancelled') ? 'pause' : '';
         var meta = [M3U_LABEL[j.status] || j.status];
-        if(j.status === 'running'){ meta.push(j.percent + '%'); meta.push('Trascorso ' + fmtHms(j.elapsed)); meta.push('ETA ' + (j.eta >= 0 ? fmtHms(j.eta) : 'N/D')); }
+        if(j.status === 'running'){ meta.push(j.percent + '%'); var e = fmtEta(j.eta); if(e) meta.push(e); }
         if(j.message) meta.push(j.message);
         var btn = fin ? '<button class="ic" data-act="m3u-clear-one" data-id="'+j.id+'" title="Rimuovi">✕</button>'
                       : '<button class="ic" data-act="m3u-cancel" data-id="'+j.id+'" title="Annulla">✕</button>';
