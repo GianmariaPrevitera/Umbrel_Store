@@ -51,6 +51,22 @@ services:
       - ${APP_DATA_DIR}/data/config:/config
       - ${UMBREL_ROOT}/data/storage/downloads:/downloads
 
+  m3u:
+    # Converte playlist .m3u (HLS) in mp4 con ffmpeg; i file finiscono in Downloads
+    image: alpine:3.20
+    restart: on-failure
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        apk add --no-cache python3 ffmpeg su-exec >/dev/null
+        exec su-exec 1000:1000 python3 /app/server.py
+    environment:
+      OUT_DIR: /downloads
+      MAX_JOBS: "3"
+    volumes:
+      - ${APP_DATA_DIR}/m3u:/app:ro
+      - ${UMBREL_ROOT}/data/storage/downloads:/downloads
+
   webui:
     # Interfaccia web minimale inclusa nell'app (cartella webui/); /jsonrpc è inoltrato ad aria2
     image: nginx:1.27-alpine
@@ -70,6 +86,7 @@ services:
           listen 80;
           root /usr/share/nginx/html;
           index index.html;
+          client_max_body_size 5m;
           resolver 127.0.0.11 valid=10s;
           location ~ ^/(config\.js|service-worker\.js|index\.html)$ {
             add_header Cache-Control "no-store";
@@ -82,6 +99,13 @@ services:
             proxy_set_header Connection $$connection_upgrade;
             proxy_set_header Host $$host;
             proxy_read_timeout 3600s;
+          }
+          location /m3u/ {
+            set $$m3u "http://gianmaria-aria2_m3u_1:8080";
+            rewrite ^/m3u/(.*)$$ /$$1 break;
+            proxy_pass $$m3u;
+            proxy_http_version 1.1;
+            proxy_set_header Host $$host;
           }
         }
         CONF

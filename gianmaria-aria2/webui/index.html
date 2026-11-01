@@ -95,6 +95,7 @@ textarea::placeholder{color:var(--muted)}
   transition-delay:0s;
 }
 .add-inner{min-height:0;overflow:hidden}
+.files{display:flex;gap:8px;flex-wrap:wrap}
 </style>
 </head>
 <body>
@@ -117,8 +118,12 @@ textarea::placeholder{color:var(--muted)}
     <div class="add-inner">
       <textarea id="urls" rows="1" placeholder="Incolla link o magnet, uno per riga"></textarea>
       <div class="add-row">
-        <label class="btn" for="torrent">Carica .torrent</label>
-        <input id="torrent" type="file" accept=".torrent,application/x-bittorrent" multiple hidden>
+        <div class="files">
+          <label class="btn" for="torrent">Carica .torrent</label>
+          <input id="torrent" type="file" accept=".torrent,application/x-bittorrent" multiple hidden>
+          <label class="btn" for="m3u">Carica .m3u</label>
+          <input id="m3u" type="file" accept=".m3u,.m3u8" multiple hidden>
+        </div>
         <button id="add" class="btn primary">Aggiungi</button>
       </div>
     </div>
@@ -128,6 +133,7 @@ textarea::placeholder{color:var(--muted)}
     <button class="tab on" data-tab="active">Attivi<span id="cActive">0</span></button>
     <button class="tab" data-tab="waiting">In coda<span id="cWaiting">0</span></button>
     <button class="tab" data-tab="stopped">Completati<span id="cStopped">0</span></button>
+    <button class="tab" data-tab="m3u">M3U<span id="cM3u">0</span></button>
   </div>
 
   <div id="list" class="list"></div>
@@ -145,7 +151,7 @@ textarea::placeholder{color:var(--muted)}
   var TOKEN = 'token:' + SECRET;
   var KEYS = ['gid','status','totalLength','completedLength','downloadSpeed','uploadSpeed','files','bittorrent','errorMessage'];
   var tab = 'active';
-  var data = {active:[], waiting:[], stopped:[]};
+  var data = {active:[], waiting:[], stopped:[], m3u:[]};
   var seq = 0;
 
   function $(id){ return document.getElementById(id); }
@@ -207,12 +213,46 @@ textarea::placeholder{color:var(--muted)}
     }).catch(function(err){ $('banner').textContent = 'Impossibile contattare aria2: ' + err.message; $('banner').classList.add('on'); });
   }
 
+  var M3U_LABEL = {queued:'In coda', running:'Conversione', done:'Completato', error:'Errore', skipped:'Già presente', cancelled:'Annullato'};
+  function renderM3u(el){
+    if(!data.m3u.length){
+      el.innerHTML = '<div class="card empty">Nessuna conversione .m3u</div>';
+      return;
+    }
+    var hasDone = data.m3u.some(function(j){ return ['done','error','skipped','cancelled'].indexOf(j.status) >= 0; });
+    el.innerHTML = (hasDone ? '<div><button class="btn" data-act="m3u-clear">Svuota elenco</button></div>' : '') +
+      data.m3u.map(function(j){
+        var fin = ['done','error','skipped','cancelled'].indexOf(j.status) >= 0;
+        var cls = j.status === 'done' ? 'done' : j.status === 'error' ? 'err' : (j.status === 'skipped' || j.status === 'cancelled') ? 'pause' : '';
+        var meta = [M3U_LABEL[j.status] || j.status];
+        if(j.status === 'running'){ meta.push(j.percent + '%'); var e = fmtEta(j.eta); if(e) meta.push(e); }
+        if(j.message) meta.push(j.message);
+        var btn = fin ? '<button class="ic" data-act="m3u-clear-one" data-id="'+j.id+'" title="Rimuovi">✕</button>'
+                      : '<button class="ic" data-act="m3u-cancel" data-id="'+j.id+'" title="Annulla">✕</button>';
+        return '<div class="card item"><div class="top"><div class="name">'+esc(j.name)+'.mp4</div><div class="acts">'+btn+'</div></div>'
+          + '<div class="bar '+cls+'"><i style="width:'+(j.status === 'done' ? 100 : j.percent)+'%"></i></div>'
+          + '<div class="meta">'+meta.map(function(m){ return '<span>'+esc(m)+'</span>'; }).join('')+'</div></div>';
+      }).join('');
+  }
+
+  function fetchM3u(){
+    return fetch('/m3u/jobs').then(function(r){ return r.json(); })
+      .then(function(j){ data.m3u = j.jobs || []; render(); })
+      .catch(function(){});
+  }
+  function m3uPost(path, body){
+    return fetch('/m3u/' + path, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body || {})})
+      .then(function(r){ return r.json().then(function(j){ if(!r.ok || j.error) throw new Error(j.error || 'Errore'); return j; }); });
+  }
+
   function render(){
     $('cActive').textContent = data.active.length;
     $('cWaiting').textContent = data.waiting.length;
     $('cStopped').textContent = data.stopped.length;
-    var items = data[tab];
+    $('cM3u').textContent = data.m3u.length;
     var el = $('list');
+    if(tab === 'm3u'){ renderM3u(el); return; }
+    var items = data[tab];
     if(!items.length){
       el.innerHTML = '<div class="card empty">' + (tab === 'active' ? 'Nessun download attivo' : tab === 'waiting' ? 'Nessun download in coda' : 'Nessun download completato') + '</div>';
       return;
@@ -253,6 +293,12 @@ textarea::placeholder{color:var(--muted)}
   $('list').addEventListener('click', function(e){
     var b = e.target.closest('[data-act]'); if(!b) return;
     var gid = b.dataset.gid, act = b.dataset.act, p;
+    if(act === 'm3u-cancel'){ m3uPost('cancel', {id: b.dataset.id}).then(fetchM3u).catch(function(err){ toast(err.message); }); return; }
+    if(act === 'm3u-clear' || act === 'm3u-clear-one'){
+      if(act === 'm3u-clear-one'){ data.m3u = data.m3u.filter(function(j){ return j.id !== b.dataset.id; }); render(); }
+      else { m3uPost('clear').then(fetchM3u).catch(function(err){ toast(err.message); }); }
+      return;
+    }
     if(act === 'pause') p = rpc('aria2.pause', [gid]);
     else if(act === 'resume') p = rpc('aria2.unpause', [gid]);
     else {
@@ -287,6 +333,25 @@ textarea::placeholder{color:var(--muted)}
     e.target.value = '';
   });
 
+  $('m3u').addEventListener('change', function(e){
+    var files = Array.prototype.slice.call(e.target.files || []);
+    e.target.value = '';
+    if(!files.length) return;
+    Promise.all(files.map(function(f){
+      return new Promise(function(res, rej){
+        var r = new FileReader();
+        r.onload = function(){ res(String(r.result)); };
+        r.onerror = function(){ rej(new Error('Lettura file non riuscita')); };
+        r.readAsText(f);
+      }).then(function(text){ return m3uPost('upload', {name: f.name, content: text}); });
+    })).then(function(){
+      toast(files.length > 1 ? 'Playlist aggiunte' : 'Playlist aggiunta');
+      tab = 'm3u';
+      Array.prototype.forEach.call(document.querySelectorAll('.tab'), function(t){ t.classList.toggle('on', t.dataset.tab === 'm3u'); });
+      fetchM3u();
+    }).catch(function(err){ toast(err.message); });
+  });
+
   var toggleAdd = $('toggleAdd');
   var addPanel = $('addPanel');
   toggleAdd.addEventListener('click', function(){
@@ -300,7 +365,8 @@ textarea::placeholder{color:var(--muted)}
   });
 
   refresh();
-  setInterval(refresh, 1500);
+  fetchM3u();
+  setInterval(function(){ refresh(); fetchM3u(); }, 1500);
 })();
 </script>
 </body>

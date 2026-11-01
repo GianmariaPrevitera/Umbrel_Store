@@ -2,7 +2,7 @@ manifestVersion: 1
 id: gianmaria-aria2
 category: files
 name: aria2
-version: "1.3.3"
+version: "1.4.0"
 tagline: Download manager con interfaccia minimale
 description: >-
   aria2 è un download manager leggero e velocissimo, con una semplice interfaccia web.
@@ -14,9 +14,9 @@ description: >-
   I file vengono salvati nella cartella Downloads di umbrelOS.
 
 
-  Incolla link o magnet, oppure carica un file .torrent: nessuna configurazione necessaria. Al primo avvio viene scaricato aria2, quindi serve connessione a internet.
+  Incolla link o magnet, oppure carica un file .torrent o una playlist .m3u (convertita in mp4): nessuna configurazione necessaria. Al primo avvio vengono scaricati aria2 e ffmpeg, quindi serve connessione a internet.
 releaseNotes: >-
-  Pulsante + nell'intestazione per aprire e chiudere il pannello di aggiunta download.
+  Nuova scheda M3U: carica una playlist .m3u e viene convertita in mp4 (video alla massima risoluzione, audio e sottotitoli italiano/inglese) nella cartella Downloads.
 developer: Gianmaria
 website: https://aria2.github.io
 dependencies: []
