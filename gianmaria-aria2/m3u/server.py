@@ -188,6 +188,7 @@ def run_job(job):
         job['message'] = msg
         if status == 'done':
             job['percent'] = 100
+    job['content'] = ''
 
 
 def worker():
@@ -257,6 +258,12 @@ class Handler(BaseHTTPRequestHandler):
                 elif j['status'] == 'queued':
                     with lock:
                         j['status'] = 'cancelled'
+            return self.reply({'ok': True})
+        if path == '/remove':
+            with lock:
+                j = jobs.get(d.get('id'))
+                if j and j['status'] in FINISHED:
+                    del jobs[j['id']]
             return self.reply({'ok': True})
         if path == '/clear':
             with lock:

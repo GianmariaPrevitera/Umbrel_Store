@@ -295,7 +295,7 @@ textarea::placeholder{color:var(--muted)}
     var gid = b.dataset.gid, act = b.dataset.act, p;
     if(act === 'm3u-cancel'){ m3uPost('cancel', {id: b.dataset.id}).then(fetchM3u).catch(function(err){ toast(err.message); }); return; }
     if(act === 'm3u-clear' || act === 'm3u-clear-one'){
-      if(act === 'm3u-clear-one'){ data.m3u = data.m3u.filter(function(j){ return j.id !== b.dataset.id; }); render(); }
+      if(act === 'm3u-clear-one'){ m3uPost('remove', {id: b.dataset.id}).then(fetchM3u).catch(function(err){ toast(err.message); }); }
       else { m3uPost('clear').then(fetchM3u).catch(function(err){ toast(err.message); }); }
       return;
     }

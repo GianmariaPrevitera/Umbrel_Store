@@ -2,7 +2,7 @@ manifestVersion: 1
 id: gianmaria-aria2
 category: files
 name: aria2
-version: "1.4.0"
+version: "1.4.1"
 tagline: Download manager con interfaccia minimale
 description: >-
   aria2 è un download manager leggero e velocissimo, con una semplice interfaccia web.
@@ -16,7 +16,7 @@ description: >-
 
   Incolla link o magnet, oppure carica un file .torrent o una playlist .m3u (convertita in mp4): nessuna configurazione necessaria. Al primo avvio vengono scaricati aria2 e ffmpeg, quindi serve connessione a internet.
 releaseNotes: >-
-  Nuova scheda M3U: carica una playlist .m3u e viene convertita in mp4 (video alla massima risoluzione, audio e sottotitoli italiano/inglese) nella cartella Downloads.
+  Scheda M3U: corretta la rimozione delle singole conversioni dall'elenco.
 developer: Gianmaria
 website: https://aria2.github.io
 dependencies: []
