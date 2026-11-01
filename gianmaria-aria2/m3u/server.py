@@ -7,6 +7,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 OUT_DIR = os.environ.get('OUT_DIR', '/downloads')
 MAX_JOBS = int(os.environ.get('MAX_JOBS', '3'))
 PORT = int(os.environ.get('PORT', '8080'))
+WAIT_TIME = int(os.environ.get('WAIT_TIME', '5'))
 # ffmpeg può aprire solo questi protocolli: niente file locali
 WL = 'http,https,tcp,tls,crypto'
 FINISHED = ('done', 'error', 'skipped', 'cancelled')
@@ -60,7 +61,7 @@ def parse_playlist(text):
 
 
 def build_cmd(p, tmp):
-    cmd = ['ffmpeg', '-hide_banner', '-nostdin', '-n', '-nostats', '-progress', 'pipe:1']
+    cmd = ['ffmpeg', '-hide_banner', '-loglevel', 'error', '-nostdin', '-n', '-nostats', '-progress', 'pipe:1']
     inputs = [p['video']]
     maps = ['-map', '0:v:0']
     codecs = ['-c:v', 'copy']
@@ -100,7 +101,7 @@ def build_cmd(p, tmp):
 
 
 def public(j):
-    return {k: j[k] for k in ('id', 'name', 'status', 'percent', 'eta', 'message')}
+    return {k: j[k] for k in ('id', 'name', 'status', 'percent', 'eta', 'elapsed', 'message')}
 
 
 def fail(job, msg):
@@ -157,17 +158,24 @@ def run_job(job):
             errbuf.append(l.strip())
     threading.Thread(target=drain, daemon=True).start()
 
+    last_t, last_out, speed = time.time(), 0.0, 0.0   # speed = secondi di video al secondo
     for line in proc.stdout:
         m = re.match(r'out_time_(?:us|ms)=(\d+)', line)
         if not m:
             continue
-        done = int(m.group(1)) / 1000000.0
-        pct = max(0, min(100, int(100 * done / duration)))
-        elapsed = time.time() - start
-        eta = int(elapsed * 100 / pct - elapsed) if pct > 0 else -1
+        out = int(m.group(1)) / 1000000.0
+        now = time.time()
+        dt = now - last_t
+        if dt >= 1:
+            inst = (out - last_out) / dt
+            speed = inst if speed == 0 else (speed * 8 + inst * 2) / 10
+            last_t, last_out = now, out
+        pct = max(0, min(100, int(100 * out / duration)))
+        eta = int(max(0.0, duration - out) / speed) if speed > 0 else -1
         with lock:
             job['percent'] = pct
             job['eta'] = eta
+            job['elapsed'] = int(now - start)
     rc = proc.wait()
     job['proc'] = None
 
@@ -191,7 +199,8 @@ def run_job(job):
     job['content'] = ''
 
 
-def worker():
+def worker(slot):
+    time.sleep(slot * WAIT_TIME)
     while True:
         job = pending.get()
         try:
@@ -237,7 +246,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self.reply({'error': 'Non sembra una playlist .m3u'}, 400)
             job = {'id': uuid.uuid4().hex[:10], 'name': safe_name(d.get('name', 'video')),
                    'content': content, 'status': 'queued', 'percent': 0, 'eta': -1,
-                   'message': '', 'cancel': False, 'proc': None}
+                   'message': '', 'elapsed': 0, 'cancel': False, 'proc': None}
             with lock:
                 jobs[job['id']] = job
                 while len(jobs) > 100:
@@ -274,6 +283,6 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == '__main__':
-    for _ in range(MAX_JOBS):
-        threading.Thread(target=worker, daemon=True).start()
+    for slot in range(MAX_JOBS):
+        threading.Thread(target=worker, args=(slot,), daemon=True).start()
     ThreadingHTTPServer(('0.0.0.0', PORT), Handler).serve_forever()
